@@ -23,10 +23,16 @@ function join(ws, username) {
     room = { conn, clients: new Set() };
     rooms.set(username, room);
     const say = (text) => room.clients.forEach((c) => send(c, { type: 'status', text }));
-    conn.on(WebcastEvent.CHAT, (d) => {
-      const user = (d.user && (d.user.nickname || d.user.uniqueId)) || d.nickname || d.uniqueId || '?';
-      room.clients.forEach((c) => send(c, { user, comment: d.comment || '' }));
-    });
+    const info = (d) => {
+      const u = d.user || {};
+      const pp = u.profilePicture || u.avatarThumb || {};
+      const avatar = pp.url || (pp.urls && pp.urls[0]) || (pp.urlList && pp.urlList[0]) || d.profilePictureUrl || '';
+      return { user: u.nickname || u.uniqueId || d.nickname || d.uniqueId || '?', id: u.uniqueId || d.uniqueId || '', avatar };
+    };
+    const all = (obj) => room.clients.forEach((c) => send(c, obj));
+    conn.on(WebcastEvent.CHAT, (d) => all({ type: 'chat', ...info(d), comment: d.comment || '' }));
+    conn.on(WebcastEvent.SHARE, (d) => all({ type: 'share', ...info(d) }));
+    conn.on(WebcastEvent.SOCIAL, (d) => { if (/share/i.test(JSON.stringify(d.displayType || d.label || ''))) all({ type: 'share', ...info(d) }); });
     conn.on('disconnected', () => { say('หลุดจาก TikTok Live'); rooms.delete(username); });
     conn.connect()
       .then(() => say('เชื่อมต่อ @' + username + ' แล้ว ✅'))
