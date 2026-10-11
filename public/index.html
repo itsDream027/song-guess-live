@@ -77,6 +77,27 @@ small{color:var(--mute)}
 #toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-90px);background:var(--cyan);color:#0d0a1e;font:600 16px Mitr;padding:10px 20px;border-radius:99px;z-index:20;transition:transform .35s cubic-bezier(.2,1.4,.4,1);box-shadow:0 8px 30px #27e3ff66}
 #toast.show{transform:translate(-50%,0)}
 .panel{background:linear-gradient(160deg,#241a4d,var(--card))}
+#game{position:relative;z-index:1}
+#lyricBg{position:fixed;inset:0;z-index:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 .3em;padding:8vh 6vw;font:600 clamp(40px,12vw,76px)/1.12 Mitr;text-align:center;pointer-events:none;overflow:hidden}
+.w{opacity:0;transform:scale(.5);transition:opacity .35s,transform .45s cubic-bezier(.2,1.7,.4,1);color:#fff}
+.w.on{opacity:.28;transform:none}
+.w.cur{opacity:.9;color:var(--yel);text-shadow:0 0 28px #ffd23f99}
+.stage{width:100%;display:flex;justify-content:center;padding:6px 0 4px}
+.disc{position:absolute;inset:0;transition:transform .9s cubic-bezier(.2,.9,.3,1)}
+.deck.reveal .disc{transform:translateX(26%) scale(.66)}
+.ring{transition:opacity .5s}.deck.reveal .ring{opacity:0}
+.sleeve{position:absolute;left:-4%;top:10%;width:80%;aspect-ratio:1;border-radius:6px;background:#333 center/cover;z-index:3;opacity:0;transform:translateX(-30%) scale(.7);transition:opacity .6s,transform .9s cubic-bezier(.2,.9,.3,1);box-shadow:0 18px 40px #000c,inset 0 0 0 1px #ffffff40}
+.sleeve::after{content:"";position:absolute;inset:0;border-radius:6px;background:linear-gradient(115deg,#ffffff40,transparent 38%,transparent 70%,#00000055)}
+.deck.reveal .sleeve{opacity:1;transform:none}
+.rank{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;margin-top:6px}
+.rk{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:16px 2px 7px;background:var(--card);border:1px solid #ffffff14;border-radius:14px}
+.rk i{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font:600 12px Mitr;font-style:normal;background:var(--pink);border-radius:99px;padding:0 9px}
+.rk .nm{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk b{color:var(--yel);font:600 14px Mitr}
+.rk.r0{background:linear-gradient(160deg,#ffd23f33,var(--card));border-color:var(--yel)}
+.rk.r0 i{background:var(--yel);color:#1a1438}
+.rk.empty{opacity:.45}
+.ph{width:36px;height:36px;border-radius:50%;border:2px dashed #ffffff55}
 </style>
 </head>
 <body>
@@ -94,24 +115,26 @@ small{color:var(--mute)}
 
 <div id="game">
   <div class="top"><div class="pill">รอบที่ <span id="rnd">0</span></div><div class="pill" id="timer">⏱ 10</div></div>
-  <div class="deck">
+  <div id="board" class="rank"></div>
+  <div class="stage"><div class="deck" id="deck">
     <svg class="ring" viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="48"/><circle id="prog" class="prg" cx="50" cy="50" r="48"/></svg>
-    <div class="vinyl" id="vinyl"><div class="label" id="label"></div></div>
+    <div class="disc"><div class="vinyl" id="vinyl"><div class="label" id="label"></div></div></div>
+    <div class="sleeve" id="sleeve"></div>
     <div class="arm" id="arm"></div>
-  </div>
+  </div></div>
   <div id="slots"></div>
-  <div id="lyric"></div>
   <div id="winner"></div>
-  <div class="panel"><h2>🏆 อันดับ</h2><ol id="board"></ol></div>
   <div class="panel"><h2>💬 คอมเมนต์</h2><div id="feed"></div></div>
   <div id="test"><input id="tu" placeholder="ชื่อ" style="max-width:80px"><input id="tc" placeholder="ทดสอบตอบ..."><button id="tb">ส่ง</button><button id="tsh" class="ghost">🔗</button><button id="skip" class="ghost">ข้าม</button></div>
 </div>
+<div id="lyricBg"></div>
 <div id="toast"></div>
 <div id="tap"><button id="tapb">🔊 แตะเพื่อเปิดเสียงและเริ่ม</button></div>
 <div id="yt"><div id="player"></div></div>
 
 <script>
 const $=id=>document.getElementById(id);
+let lyTick=null,wTimers=[],lineKey=-1;
 let player,ids=[],order=[],idx=-1,cur=null,tick=null,nextTimer=null,players={},left=0,active=false,lyrics=[],DUR=10,rnd=0;
 const MARK=/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/;
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -122,7 +145,7 @@ $('go').onclick=()=>{
   if(!m[1])return alert('ใส่ลิงก์เพลย์ลิสต์ก่อน');
   window.PLID=m[1];DUR=+$('dur').value;
   const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.appendChild(s);
-  $('setup').style.display='none';$('game').style.display='flex';$('timer').textContent='⏱ '+DUR;
+  $('setup').style.display='none';$('game').style.display='flex';$('timer').textContent='⏱ '+DUR;drawBoard();
   connectWS();
 };
 window.onYouTubeIframeAPIReady=()=>{
@@ -134,28 +157,41 @@ $('tapb').onclick=()=>{
   setTimeout(()=>{ids=player.getPlaylist()||[];if(!ids.length)return alert('โหลดเพลย์ลิสต์ไม่ได้');order=shuffle([...ids.keys()]);next()},1200);
 };
 
-function parseTitle(t){
-  t=t.replace(/[\(\[【].*?[\)\]】]/g,'').replace(/official|mv|m\/v|audio|lyrics?|เนื้อเพลง/ig,'');
-  const p=t.split(/\s[-–|]\s/);return (p.length>1?p[1]:p[0]).trim();
+const cleanAuthor=a=>(a||'').replace(/ - Topic|VEVO|\bOfficial\b|\bMusic\b|\bChannel\b/ig,'').trim();
+function parseTitle(t,artists=[]){
+  t=t.replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|mv|m\/v|audio|lyrics?|lyric video|music video|visualizer)\b/ig,' ').replace(/เนื้อเพลง/g,' ');
+  t=t.replace(/\s*(feat\.?|ft\.?|featuring)\s.*$/i,'');
+  const q=t.match(/[「『“"]([^」』”"]{2,})[」』”"]/);if(q)t=q[1];
+  const ar=artists.map(a=>(a||'').trim()).filter(a=>a.length>=2);
+  const hit=s=>{const n=norm(s);return n.length>=2&&ar.some(a=>{const m=norm(a);return m===n||(n.length>=3&&m.includes(n))})};
+  let parts=t.split(/\s[-–—|:]\s|\s\/\s/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length>1){const kept=parts.filter(x=>!hit(x));if(kept.length&&kept.length<parts.length)parts=kept}
+  let r=(parts.length>1?parts[1]:parts[0]||t).trim();
+  ar.forEach(a=>{ // ศิลปินต่อท้ายหรือนำหน้าโดยไม่มีขีดคั่น
+    const cut=r.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/\s+/g,' ').trim();
+    if(cut.length>=2)r=cut});
+  return r.replace(/^[-–—|:\s]+|[-–—|:\s]+$/g,'');
 }
 const norm=s=>s.toLowerCase().replace(/[\s\-_.,!?'"()]/g,'');
 const chars=s=>{const o=[];for(const c of Array.from(s)){if(MARK.test(c)&&o.length)o[o.length-1]+=c;else o.push(c)}return o};
 
-const clean=t=>t.replace(/[\(\[【].*?[\)\]】]/g,'').trim();
+const clean=t=>t.replace(/[\(\[【].*?[\)\]】]/g,'').replace(/\s*(feat\.?|ft\.?|featuring)\s.*$/i,'').trim();
 async function findMatch(title,author,ytDur){
-  const nt=norm(title),qs=[parseTitle(title)+' '+author.replace(/ - Topic|VEVO|Official/ig,''),parseTitle(title)];
-  let loose=null;
-  for(const q of qs){
+  const nt=norm(title),au=cleanAuthor(author),base=parseTitle(title,[au]);
+  let loose=null,artist='';
+  const longest=arr=>arr.sort((x,y)=>y.trackName.length-x.trackName.length)[0]||null; // เอาชื่อยาวสุด กันได้ชื่อไม่ครบ
+  for(const q of [base+' '+au,base]){
     try{
       const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),4000);
       const j=await (await fetch('https://lrclib.net/api/search?q='+encodeURIComponent(q),{signal:ctl.signal})).json();clearTimeout(to);
       const ok=x=>{const n=norm(clean(x.trackName||''));return n.length>=2&&nt.includes(n)};
-      const strict=j.find(x=>x.syncedLyrics&&Math.abs(x.duration-ytDur)<=5&&ok(x));
-      if(strict)return {...strict,strict:true};
-      loose=loose||j.find(ok)||null;
+      j.forEach(x=>{const a=norm(x.artistName||'');if(!artist&&a.length>=2&&nt.includes(a))artist=x.artistName});
+      const strict=longest(j.filter(x=>x.syncedLyrics&&Math.abs(x.duration-ytDur)<=5&&ok(x)));
+      if(strict)return {m:{...strict,strict:true},artist:strict.artistName||artist};
+      loose=loose||longest(j.filter(ok));
     }catch(e){}
   }
-  return loose;
+  return {m:loose,artist:(loose&&loose.artistName)||artist};
 }
 function parseLRC(t){return t.split('\n').map(l=>{const m=l.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)/);return m?{t:+m[1]*60+ +m[2],s:m[3].trim()}:null}).filter(x=>x&&x.s.length>3)}
 function findChorus(L){ // ท่อนฮุก = กลุ่มบรรทัดที่ซ้ำกลุ่มแรกในเพลง
@@ -165,24 +201,24 @@ function findChorus(L){ // ท่อนฮุก = กลุ่มบรรท�
   return i<0?null:L[i].t;
 }
 async function next(){
-  clearInterval(tick);clearTimeout(nextTimer);active=false;
+  clearInterval(lyTick);clearInterval(tick);clearTimeout(nextTimer);active=false;
   idx=(idx+1)%order.length;rnd++;$('rnd').textContent=rnd;
   player.loadVideoById({videoId:ids[order[idx]],startSeconds:0});
-  $('winner').textContent='';$('winner').className='';$('lyric').innerHTML='';$('label').classList.remove('reveal');
+  $('winner').textContent='';$('winner').className='';clearLyric();$('label').classList.remove('reveal');$('deck').classList.remove('reveal');
   $('prog').style.transition='none';$('prog').style.strokeDashoffset=0;$('timer').textContent='⏱ '+DUR;
   await new Promise(r=>setTimeout(r,1800));
   const d=player.getVideoData(),ytDur=player.getDuration()||180;
   player.pauseVideo();
-  const m=await findMatch(d.title,d.author,ytDur);
-  cur={vid:d.video_id,ans:parseTitle(d.title),synced:null,plain:[],hook:null};
+  const r=await findMatch(d.title,d.author,ytDur),m=r.m,artists=[cleanAuthor(d.author),r.artist];
+  cur={vid:d.video_id,ans:parseTitle(d.title,artists),synced:null,plain:[],hook:null};
   if(m){
     cur.ans=clean(m.trackName)||cur.ans;
     if(m.strict&&m.syncedLyrics){cur.synced=parseLRC(m.syncedLyrics);cur.hook=findChorus(cur.synced)}
     cur.plain=(m.plainLyrics||'').split('\n').map(x=>x.trim()).filter(x=>x.length>6);
   }
-  cur.alts=[...new Set([norm(cur.ans),norm(parseTitle(d.title))])].filter(x=>x.length>=2);
+  cur.alts=[...new Set([norm(cur.ans),norm(parseTitle(d.title,artists))])].filter(x=>x.length>=2);
   cur.seek=cur.hook!=null?Math.max(0,Math.min(cur.hook-1,ytDur-DUR-3)):Math.floor(ytDur*(0.2+Math.random()*0.4));
-  $('label').style.backgroundImage=`url(https://i.ytimg.com/vi/${d.video_id}/hqdefault.jpg)`;
+  {const u=`url(https://i.ytimg.com/vi/${d.video_id}/hqdefault.jpg)`;$('label').style.backgroundImage=u;$('sleeve').style.backgroundImage=u}
   $('slots').innerHTML=chars(cur.ans).map(c=>c.trim()===''?'<div class="slot gap"></div>':'<div class="slot">&nbsp;</div>').join('');
   player.seekTo(cur.seek,true);setTimeout(startRound,500);
 }
@@ -201,23 +237,34 @@ function startRound(){
     if(t===m1)reveal(Math.ceil(chars(cur.ans).length*.15));
     if(t===m2)reveal(Math.ceil(chars(cur.ans).length*.2));
     const li=L.indexOf(t);
-    if(li>-1){let line='';
-      if(cur.synced){const now=cur.seek+(DUR-t)+.3;line=(cur.synced.filter(x=>x.t<=now).pop()||{}).s||''}
-      else if(cur.plain.length>4){const s0=Math.floor(cur.plain.length*.3);line=cur.plain.slice(s0+li*2,s0+li*2+2).join(' / ')}
-      if(line)$('lyric').innerHTML='<span>♪ '+esc(line)+'</span>';
-    }
+    if(li>-1&&!cur.synced&&cur.plain.length>4){const s0=Math.floor(cur.plain.length*.3);showLine(cur.plain.slice(s0+li*2,s0+li*2+2).join(' '),2.4)}
     if(t<=0)end(null);
   },1000);
+  const t0=performance.now();lineKey=-1;
+  lyTick=setInterval(()=>{ // เนื้อเพลงตามเสียง ขึ้นทีละคำ (เริ่มหลังผ่านไป 20% ของเวลา)
+    if(!cur.synced||(performance.now()-t0)/1000<DUR*.2)return;
+    const now=player.getCurrentTime()+.2;let k=-1;
+    for(let i=0;i<cur.synced.length;i++){if(cur.synced[i].t<=now)k=i;else break}
+    if(k>-1&&k!==lineKey){lineKey=k;const nx=cur.synced[k+1];showLine(cur.synced[k].s,Math.min(nx?nx.t-cur.synced[k].t:4,5)*.85)}
+  },150);
+}
+function clearLyric(){wTimers.forEach(clearTimeout);wTimers=[];lineKey=-1;$('lyricBg').innerHTML=''}
+function segWords(t){try{return [...new Intl.Segmenter('th',{granularity:'word'}).segment(t)].map(x=>x.segment).filter(x=>x.trim())}catch(e){return t.split(/\s+/)}}
+function showLine(text,span){
+  wTimers.forEach(clearTimeout);wTimers=[];
+  const ws=segWords(text);if(!ws.length)return;
+  const box=$('lyricBg');box.innerHTML=ws.map(w=>`<span class="w">${esc(w)}</span>`).join('');
+  const els=[...box.children],step=Math.max(.12,span/ws.length);
+  els.forEach((e,i)=>wTimers.push(setTimeout(()=>{els.forEach(x=>x.classList.remove('cur'));e.classList.add('on','cur')},i*step*1000)));
 }
 function end(who){
-  if(!active)return;active=false;clearInterval(tick);
+  if(!active)return;active=false;clearInterval(tick);clearInterval(lyTick);clearLyric();
   player.pauseVideo();$('vinyl').classList.remove('on');$('arm').classList.remove('on');
   const els=[...$('slots').children],cs=chars(cur.ans);
   els.forEach((e,i)=>{if(cs[i].trim()){e.textContent=cs[i];e.classList.add('on')}});
-  $('label').classList.add('reveal');
+  $('label').classList.add('reveal');$('deck').classList.add('reveal');
   $('winner').className=who?'win':'lose';
   $('winner').innerHTML=who?`<div class="wcard">${av(who,64)}<div><div class="wn">${esc(who.name)}</div><div class="wp">🎉 ตอบถูก! +${who.gain} คะแนน</div></div></div>`:'⏰ หมดเวลา!';
-  $('lyric').innerHTML='<span>🎶 '+esc(cur.ans)+'</span>';
   nextTimer=setTimeout(next,6000);
 }
 $('skip').onclick=()=>{if(!cur)return;if(active)end(null);else{clearTimeout(nextTimer);next()}};
@@ -242,9 +289,10 @@ function onShare(d){ // แชร์ไลฟ์ได้โบนัส 20 ค�
   drawBoard();toast(`🔗 ${d.user} แชร์ไลฟ์ +20 คะแนน`);speak(d.user+' แชร์ไลฟ์');
 }
 function drawBoard(){
-  const med=['🥇','🥈','🥉','4','5'];
-  $('board').innerHTML=Object.values(players).sort((a,b)=>b.pts-a.pts).slice(0,5)
-    .map((p,i)=>`<li class="r${i}"><em>${med[i]}</em>${av(p,34)}<span>${esc(p.name)}${p.shared?' 🔗':''}</span><b>${p.pts}</b></li>`).join('');
+  const list=Object.values(players).sort((a,b)=>b.pts-a.pts).slice(0,5);
+  $('board').innerHTML=[0,1,2,3,4].map(i=>{const p=list[i];
+    return p?`<div class="rk r${i}"><i>${i+1}</i>${av(p,36)}<span class="nm">${esc(p.name)}${p.shared?' 🔗':''}</span><b>${p.pts}</b></div>`
+            :`<div class="rk empty"><i>${i+1}</i><div class="ph"></div><span class="nm">—</span><b>0</b></div>`}).join('');
 }
 function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function connectWS(){
