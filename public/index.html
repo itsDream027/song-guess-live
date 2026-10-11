@@ -78,9 +78,9 @@ small{color:var(--mute)}
 #toast.show{transform:translate(-50%,0)}
 .panel{background:linear-gradient(160deg,#241a4d,var(--card))}
 #game{position:relative;z-index:1}
-#lyricBg{position:fixed;inset:0;z-index:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 .3em;padding:8vh 6vw;font:600 clamp(40px,12vw,76px)/1.12 Mitr;text-align:center;pointer-events:none;overflow:hidden}
+#lyricBg{width:100%;min-height:104px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 .3em;padding:4px 8px;font:600 clamp(24px,7.5vw,38px)/1.2 Mitr;text-align:center}
 .w{opacity:0;transform:scale(.5);transition:opacity .35s,transform .45s cubic-bezier(.2,1.7,.4,1);color:#fff}
-.w.on{opacity:.28;transform:none}
+.w.on{opacity:.6;transform:none}
 .w.cur{opacity:.9;color:var(--yel);text-shadow:0 0 28px #ffd23f99}
 .stage{width:100%;display:flex;justify-content:center;padding:6px 0 4px}
 .disc{position:absolute;inset:0;transition:transform .9s cubic-bezier(.2,.9,.3,1)}
@@ -98,6 +98,7 @@ small{color:var(--mute)}
 .rk.r0 i{background:var(--yel);color:#1a1438}
 .rk.empty{opacity:.45}
 .ph{width:36px;height:36px;border-radius:50%;border:2px dashed #ffffff55}
+#test{justify-content:center}
 </style>
 </head>
 <body>
@@ -106,7 +107,7 @@ small{color:var(--mute)}
   <h1>🎵 ทายเพลง Live</h1>
   <small>ลิงก์เพลย์ลิสต์ YouTube</small>
   <input id="pl" placeholder="https://www.youtube.com/playlist?list=PL...">
-  <small>ชื่อ TikTok ที่กำลังไลฟ์ (ไม่ใส่ = ใช้ช่องทดสอบ)</small>
+  <small>ชื่อ TikTok ที่กำลังไลฟ์</small>
   <input id="ws" placeholder="@username" autocapitalize="off">
   <small>เวลาต่อรอบ</small>
   <select id="dur"><option value="10">10 วินาที</option><option value="15">15 วินาที</option><option value="20">20 วินาที</option><option value="30">30 วินาที</option></select>
@@ -123,11 +124,11 @@ small{color:var(--mute)}
     <div class="arm" id="arm"></div>
   </div></div>
   <div id="slots"></div>
+  <div id="lyricBg"></div>
   <div id="winner"></div>
   <div class="panel"><h2>💬 คอมเมนต์</h2><div id="feed"></div></div>
-  <div id="test"><input id="tu" placeholder="ชื่อ" style="max-width:80px"><input id="tc" placeholder="ทดสอบตอบ..."><button id="tb">ส่ง</button><button id="tsh" class="ghost">🔗</button><button id="skip" class="ghost">ข้าม</button></div>
+  <div id="test"><button id="skip" class="ghost">ข้ามเพลง</button></div>
 </div>
-<div id="lyricBg"></div>
 <div id="toast"></div>
 <div id="tap"><button id="tapb">🔊 แตะเพื่อเปิดเสียงและเริ่ม</button></div>
 <div id="yt"><div id="player"></div></div>
@@ -271,7 +272,7 @@ $('skip').onclick=()=>{if(!cur)return;if(active)end(null);else{clearTimeout(next
 
 const av=(p,s)=>`<span class="av" style="--s:${s}px"><b>${esc((p.name||'?').trim().charAt(0).toUpperCase())}</b>${p.avatar?`<img src="${esc(p.avatar)}" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</span>`;
 function addPoints(key,name,avatar,n){const p=players[key]||(players[key]={name,avatar:'',pts:0,shared:false});if(avatar)p.avatar=avatar;p.pts+=n;return p}
-function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2800)}
+function toast(t,ms=2800){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),ms)}
 function onComment(user,text,avatar,id){
   const key=id||user;if(avatar&&players[key])players[key].avatar=avatar;
   const f=$('feed');f.insertAdjacentHTML('afterbegin',`<div><b>${esc(user)}</b>: ${esc(text)}</div>`);
@@ -300,13 +301,10 @@ function connectWS(){
   const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
   w.onopen=()=>w.send(JSON.stringify({type:'join',username:u}));
   w.onmessage=e=>{try{const d=JSON.parse(e.data);
-    if(d.type==='status'){$('feed').insertAdjacentHTML('afterbegin','<div>'+esc(d.text)+'</div>');return}
+    if(d.type==='status'){$('feed').insertAdjacentHTML('afterbegin','<div>'+esc(d.text)+'</div>');toast(d.text,6000);return}
     if(d.type==='ping')return;if(d.type==='share')return onShare(d);onComment(d.user||'?',d.comment||'',d.avatar,d.id)}catch(_){}};
-  w.onclose=()=>setTimeout(connectWS,3000);
+  w.onerror=()=>toast('ต่อเซิร์ฟเวอร์ไม่ได้ (WebSocket)',5000);w.onclose=()=>setTimeout(connectWS,3000);
 }
-$('tb').onclick=()=>{const c=$('tc').value;if(c){onComment($('tu').value||'ทดสอบ',c);$('tc').value=''}};
-$('tsh').onclick=()=>onShare({user:$('tu').value||'ทดสอบ'});
-$('tc').onkeydown=e=>{if(e.key==='Enter')$('tb').click()};
 </script>
 </body>
 </html>
