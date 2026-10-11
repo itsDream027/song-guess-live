@@ -18,7 +18,8 @@ button.alt{background:#4b2d7a}
 small{color:var(--mute)}
 #game{display:none;grid-template-columns:1fr 320px;gap:20px;padding:20px;max-width:1200px;margin:0 auto;min-height:100vh}
 #stage{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
-#yt{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#yt{position:fixed;right:0;bottom:0;width:200px;height:113px;opacity:.02;pointer-events:none;z-index:-1}
+#tap{position:fixed;inset:0;background:#14091fee;display:none;align-items:center;justify-content:center;z-index:9}#tap button{font:600 24px Mitr;padding:20px 32px;border:0;border-radius:16px}
 .vinylWrap{position:relative;width:min(380px,80vw);aspect-ratio:1}
 .vinyl{width:100%;height:100%;border-radius:50%;background:repeating-radial-gradient(circle,#0a0a0a 0 3px,#1b1b1b 4px 5px);box-shadow:0 20px 50px #000a,inset 0 0 0 6px #000;position:relative;animation:spin 3s linear infinite;animation-play-state:paused}
 .vinyl.on{animation-play-state:running}
@@ -81,6 +82,7 @@ ol{margin:0;padding-left:22px}
     <div id="test"><input id="tu" placeholder="ชื่อ" style="max-width:90px"><input id="tc" placeholder="ทดสอบตอบ..."><button id="tb" style="padding:8px">ส่ง</button></div>
   </aside>
 </div>
+<div id="tap"><button id="tapb">🔊 แตะเพื่อเปิดเสียงและเริ่ม</button></div>
 <div id="yt"><div id="player"></div></div>
 
 <script>
@@ -99,7 +101,13 @@ $('go').onclick=()=>{
 };
 window.onYouTubeIframeAPIReady=()=>{
   player=new YT.Player('player',{height:'200',width:'200',playerVars:{listType:'playlist',list:PLID,playsinline:1},
-    events:{onReady:()=>setTimeout(()=>{ids=player.getPlaylist()||[];order=shuffle([...ids.keys()]);next()},1500)}});
+    events:{onReady:()=>{player.unMute();player.setVolume(100);$('tap').style.display='flex'},
+    onError:()=>{if(cur)next()}}});
+};
+$('tapb').onclick=()=>{ // แตะครั้งนี้ปลดล็อกเสียงบนมือถือ
+  $('tap').style.display='none';
+  player.unMute();player.setVolume(100);player.playVideo();
+  setTimeout(()=>{ids=player.getPlaylist()||[];order=shuffle([...ids.keys()]);next()},1200);
 };
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 
