@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>จัดการเพลง</title>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;600&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0a1e;--card:#1a1438;--pink:#ff2e88;--cyan:#27e3ff;--yel:#ffd23f;--ok:#3dffb0;--ink:#fff6e6;--mute:#a79bd0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Sarabun,sans-serif;min-height:100dvh}
+h1,button,.n{font-family:Mitr,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:16px}
+input{width:100%;padding:12px;border-radius:12px;border:2px solid #ffffff22;background:#ffffff0d;color:var(--ink);font:inherit;font-size:16px}
+button{border:0;border-radius:12px;padding:12px 18px;font-size:16px;color:#fff;background:var(--pink)}
+small,.mute{color:var(--mute)}
+#login{display:flex;flex-direction:column;gap:10px;text-align:center;padding-top:10vh}
+#login h1{margin:0}
+#code{text-align:center;font:600 28px Mitr;letter-spacing:6px}
+#err{color:#ff7a9c;min-height:20px}
+#main{display:none}
+.bar{position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:2;display:flex;flex-direction:column;gap:8px}
+.item{background:var(--card);border-radius:14px;padding:12px;margin:10px 0;border:1px solid #ffffff12}
+.item .t{font-size:14px;color:var(--mute);display:flex;gap:8px}
+.item .n{color:var(--cyan);min-width:28px}
+.item input{margin-top:8px}
+.item.edited{border-color:var(--yel)}
+.ok{color:var(--ok);font-size:13px;min-height:16px}
+.last{font-size:13px;color:var(--mute);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="login">
+    <h1>🛠 จัดการเพลง</h1>
+    <small>ใส่รหัส 6 หลักที่แสดงบนหน้าจอเกม</small>
+    <input id="code" inputmode="numeric" maxlength="6" placeholder="000000">
+    <button id="go">เชื่อมต่อ</button>
+    <div id="err"></div>
+  </div>
+  <div id="main">
+    <div class="bar">
+      <div style="display:flex;justify-content:space-between;align-items:center"><h1 style="margin:0;font-size:22px">🎵 เฉลยเพลง</h1><span class="mute" id="cnt"></span></div>
+      <input id="q" placeholder="ค้นหาชื่อเพลง...">
+      <small>ช่องว่าง = ให้ระบบเดาเอง • พิมพ์แล้วแตะที่อื่นเพื่อบันทึก • มีผลตั้งแต่รอบถัดไป</small>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>s.toLowerCase().replace(/[\s\-_.,!?'"()]/g,'');
+const MARK=/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/;
+const cleanAuthor=a=>(a||'').replace(/ - Topic|VEVO|\bOfficial\b|\bMusic\b|\bChannel\b/ig,'').trim();
+function parseTitle(t,artists=[]){
+  t=t.replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|mv|m\/v|audio|lyrics?|lyric video|music video|visualizer)\b/ig,' ').replace(/เนื้อเพลง/g,' ');
+  t=t.replace(/\s*(feat\.?|ft\.?|featuring)\s.*$/i,'');
+  const q=t.match(/[「『“"]([^」』”"]{2,})[」』”"]/);if(q)t=q[1];
+  const ar=artists.map(a=>(a||'').trim()).filter(a=>a.length>=2);
+  const hit=s=>{const n=norm(s);return n.length>=2&&ar.some(a=>{const m=norm(a);return m===n||(n.length>=3&&m.includes(n))})};
+  let parts=t.split(/\s[-–—|:]\s|\s\/\s/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length>1){const kept=parts.filter(x=>!hit(x));if(kept.length&&kept.length<parts.length)parts=kept}
+  let r=(parts.length>1?parts[1]:parts[0]||t).trim();
+  ar.forEach(a=>{const cut=r.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/\s+/g,' ').trim();if(cut.length>=2)r=cut});
+  return r.replace(/^[-–—|:\s]+|[-–—|:\s]+$/g,'');
+}
+let ws,code='',songs=[],answers={},played={};
+$('code').value=(location.hash||'').replace('#','').slice(0,6);
+function connect(){
+  ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
+  ws.onopen=()=>ws.send(JSON.stringify({type:'admin',code}));
+  ws.onmessage=e=>{const d=JSON.parse(e.data);
+    if(d.type==='adminError'){$('err').textContent=d.text;return}
+    if(d.type==='songlist'){songs=d.songs;answers=d.answers||{};played=d.played||{};$('login').style.display='none';$('main').style.display='block';render(d.loading)}
+    if(d.type==='answer'){if(d.answer)answers[d.id]=d.answer;else delete answers[d.id];const el=document.querySelector(`[data-id="${d.id}"] input`);if(el&&document.activeElement!==el)el.value=d.answer;mark(d.id)}
+  };
+  ws.onclose=()=>{if(code)setTimeout(connect,2500)};
+}
+$('go').onclick=()=>{code=$('code').value.trim();if(code.length!==6)return $('err').textContent='ใส่รหัส 6 หลัก';$('err').textContent='';connect()};
+function render(loading){
+  const q=norm($('q').value||'');
+  $('cnt').textContent=loading?'กำลังโหลดชื่อเพลง...':songs.length+' เพลง • แก้แล้ว '+songs.filter(s=>answers[s.id]).length;
+  $('list').innerHTML=songs.map((s,i)=>({s,i})).filter(({s})=>!q||norm(s.title+s.author+(answers[s.id]||'')).includes(q)).map(({s,i})=>{
+    const g=s.title?parseTitle(s.title,[cleanAuthor(s.author)]):'';
+    return `<div class="item${answers[s.id]?' edited':''}" data-id="${s.id}">
+      <div class="t"><span class="n">${i+1}</span><span>${esc(s.title||s.id)}${s.author?' — '+esc(s.author):''}</span></div>
+      <input value="${esc(answers[s.id]||'')}" placeholder="${esc(g||'ให้ระบบเดา')}">
+      <div class="ok"></div>${played[s.id]?`<div class="last">เฉลยล่าสุดที่ใช้: ${esc(played[s.id])}</div>`:''}</div>`}).join('');
+}
+function mark(id){const it=document.querySelector(`[data-id="${id}"]`);if(!it)return;it.classList.toggle('edited',!!answers[id]);const o=it.querySelector('.ok');o.textContent='✓ บันทึกแล้ว';setTimeout(()=>o.textContent='',1800);$('cnt').textContent=songs.length+' เพลง • แก้แล้ว '+songs.filter(s=>answers[s.id]).length}
+$('list').addEventListener('change',e=>{
+  const it=e.target.closest('.item');if(!it)return;const id=it.dataset.id,v=e.target.value.trim();
+  ws.send(JSON.stringify({type:'setAnswer',id,answer:v}));
+});
+$('q').oninput=()=>render(false);
+if($('code').value.length===6)$('go').click();
+</script>
+</body>
+</html>
