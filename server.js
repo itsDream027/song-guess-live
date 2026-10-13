@@ -39,6 +39,21 @@ function cleanSongs(arr) {
   }).filter(Boolean);
 }
 
+const meta = new Map(); // videoId -> { title, author } (แคช)
+async function loadMeta(ids) {
+  if (meta.size > 3000) meta.clear();
+  const todo = ids.filter((id) => !meta.has(id));
+  for (let i = 0; i < todo.length; i += 6) {
+    await Promise.all(todo.slice(i, i + 6).map(async (id) => {
+      try {
+        const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id), { signal: AbortSignal.timeout(6000) });
+        const j = await r.json();
+        meta.set(id, { title: String(j.title || ''), author: String(j.author_name || '') });
+      } catch (_) {}
+    }));
+  }
+}
+
 // ---------- TikTok Live (ต่อใหม่อัตโนมัติ) ----------
 const rooms = new Map();
 const say = (room, text) => room.clients.forEach((c) => send(c, { type: 'status', text }));
@@ -144,6 +159,14 @@ wss.on('connection', (ws) => {
       case 'join': join(ws, d.username); break;
       case 'host': host(ws, d); break;
       case 'admin': admin(ws, d.code); break;
+      case 'meta': { // แอดมินขอชื่อวิดีโอตอนนำเข้าเพลย์ลิสต์
+        if (!ws.isAdmin) break;
+        const ids = (Array.isArray(d.ids) ? d.ids : []).filter((x) => VID.test(x)).slice(0, 300);
+        loadMeta(ids)
+          .then(() => send(ws, { type: 'meta', rid: d.rid, items: ids.map((id) => ({ yt: id, ...(meta.get(id) || { title: '', author: '' }) })) }))
+          .catch(() => send(ws, { type: 'meta', rid: d.rid, items: [] }));
+        break;
+      }
       case 'libSet': {
         if (!ws.isAdmin) break;
         const c = cleanSongs(d.songs); if (!c) break;
