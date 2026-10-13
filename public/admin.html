@@ -46,9 +46,15 @@ label{display:block;margin:8px 0;font-size:13px;color:var(--mute)}label input,la
   <div id="main">
     <div class="bar">
       <div class="row" style="justify-content:space-between"><h1 style="margin:0;font-size:22px">🎵 คลังเพลง <span class="dot" id="dot"></span></h1><span class="mute" id="cnt"></span></div>
-      <div class="row"><button id="add">＋ เพิ่มเพลง</button><button class="g" id="bulkBtn">วางหลายเพลง</button><button class="g" id="exp">⬇ สำรอง</button><button class="g" id="imp">⬆ นำเข้า</button><input type="file" id="file" accept=".json" hidden></div>
+      <div class="row"><button id="add">＋ เพิ่มเพลง</button><button class="g" id="plBtn">📥 เพลย์ลิสต์</button><button class="g" id="bulkBtn">วางหลายเพลง</button><button class="g" id="exp">⬇ สำรอง</button><button class="g" id="imp">⬆ นำเข้า</button><input type="file" id="file" accept=".json" hidden></div>
       <input id="q" placeholder="ค้นหาเพลง...">
       <div id="saved"></div>
+    </div>
+    <div class="card" id="plCard">
+      <small>วางลิงก์เพลย์ลิสต์ YouTube (สาธารณะหรือไม่แสดงในรายการ) ระบบจะนำเข้าทุกเพลงพร้อมเดาชื่อเพลงให้ แล้วคุณค่อยตรวจและแก้เฉลยทีหลัง</small>
+      <input id="pl" placeholder="https://www.youtube.com/playlist?list=PL..." autocapitalize="off">
+      <div class="row" style="margin-top:8px"><button id="plGo">นำเข้า</button><span id="plMsg" class="mute"></span></div>
+      <div id="ytbox" style="position:fixed;right:0;bottom:0;width:120px;height:68px;opacity:.02;pointer-events:none"></div>
     </div>
     <div class="card" id="bulkCard">
       <small>บรรทัดละ 1 เพลง รูปแบบ: <b>ชื่อเพลง | ลิงก์ YouTube | ศิลปิน | เวลาเริ่ม</b> (ศิลปินกับเวลาเริ่มไม่ต้องใส่ก็ได้)</small>
@@ -65,9 +71,24 @@ const uid=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const ytId=u=>{u=String(u||'').trim();const m=u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{11})/)||u.match(/^([\w-]{11})$/);return m?m[1]:''};
 const parseT=s=>{s=String(s||'').trim();if(!s)return null;const p=s.split(':').map(Number);if(p.some(isNaN))return null;return p.reduce((a,b)=>a*60+b,0)};
 const fmtT=n=>n==null?'':Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0');
+const norm=s=>String(s).toLowerCase().replace(/[\s\-_.,!?'"()]/g,'');
+const cleanAuthor=x=>(x||'').replace(/ - Topic|VEVO|\bOfficial\b|\bMusic\b|\bChannel\b/ig,'').trim();
+function guessTitle(t,author){
+  if(!t)return '';
+  const ar=[cleanAuthor(author)].filter(x=>x.length>=2);
+  t=t.replace(/[\(\[【].*?[\)\]】]/g,' ').replace(/\b(official|mv|m\/v|audio|lyrics?|lyric video|music video|visualizer)\b/ig,' ').replace(/เนื้อเพลง/g,' ').replace(/\s*(feat\.?|ft\.?|featuring)\s.*$/i,'');
+  const q=t.match(/[「『“"]([^」』”"]{2,})[」』”"]/);if(q)t=q[1];
+  const hit=x=>{const n=norm(x);return n.length>=2&&ar.some(y=>{const m=norm(y);return m===n||(n.length>=3&&m.includes(n))})};
+  let parts=t.split(/\s[-–—|:]\s|\s\/\s/).map(x=>x.trim()).filter(Boolean);
+  if(parts.length>1){const kept=parts.filter(x=>!hit(x));if(kept.length&&kept.length<parts.length)parts=kept}
+  let r=(parts.length>1?parts[1]:parts[0]||t).trim();
+  ar.forEach(y=>{const cut=r.replace(new RegExp(y.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/\s+/g,' ').trim();if(cut.length>=2)r=cut});
+  return r.replace(/^[-–—|:\s]+|[-–—|:\s]+$/g,'');
+}
+const warnText=s=>!valid(s)?'⚠️ ไม่ครบ':(s._new?'🆕 ตรวจเฉลย':'');
 const valid=s=>!!(s.title.trim()&&s.yt);
 const mk=o=>({id:o.id||uid(),title:o.title||'',artist:o.artist||'',link:o.yt?'https://youtu.be/'+o.yt:(o.link||''),yt:o.yt||ytId(o.link),start:o.start==null?null:o.start,hint:o.hint||'',alts:o.alts||[]});
-let ws,code='',songs=[],timer=null,live=false;
+let ws,code='',songs=[],timer=null,live=false,yt=null,curRid=0,pendingList=null;
 $('code').value=(location.hash||'').replace('#','').slice(0,6);
 function connect(){
   ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');const w=ws;
@@ -75,6 +96,7 @@ function connect(){
   w.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch(_){return}
     if(d.type==='adminError'){$('err').textContent=d.text;code='';return}
     if(d.type==='library'){songs=(d.lib.songs||[]).map(mk);$('login').style.display='none';$('main').style.display='block';render()}
+    if(d.type==='meta'&&d.rid===curRid)onMeta(d.items||[]);
     if(d.type==='saved'){$('saved').textContent='✓ บันทึกแล้ว '+d.count+' เพลง (มีผลรอบถัดไป)';setTimeout(()=>$('saved').textContent='',2500)}};
   w.onclose=()=>{live=false;$('dot').classList.remove('on');if(code)setTimeout(connect,2500)};
 }
@@ -82,14 +104,14 @@ $('go').onclick=()=>{code=$('code').value.trim();if(code.length!==6)return $('er
 function save(){clearTimeout(timer);$('saved').textContent='กำลังบันทึก…';timer=setTimeout(()=>{
   const out=songs.filter(valid).map(s=>({id:s.id,title:s.title.trim(),artist:s.artist.trim(),yt:s.yt,start:s.start,hint:s.hint,alts:s.alts}));
   if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:'libSet',songs:out}));else $('saved').textContent='⚠️ ยังไม่ได้เชื่อมต่อ';},500)}
-function card(s,i){return `<details class="item" data-i="${i}"${s._open?' open':''}><summary><span class="n">${i+1}</span><b>${esc(s.title||'(ยังไม่ตั้งชื่อ)')}</b><span class="warn">${valid(s)?'':'⚠️ ไม่ครบ'}</span></summary>
+function card(s,i){return `<details class="item" data-i="${i}"${s._open?' open':''}><summary><span class="n">${i+1}</span><b>${esc(s.title||'(ยังไม่ตั้งชื่อ)')}</b><span class="warn">${warnText(s)}</span></summary>
 <label>ชื่อเพลง (เฉลย)<input data-f="title" value="${esc(s.title)}"></label>
 <label>ลิงก์ YouTube<input data-f="link" value="${esc(s.link)}" placeholder="https://youtu.be/..."></label>
 <label>ศิลปิน (ไม่บังคับ — เปิดเป็นคำใบ้กลางรอบ)<input data-f="artist" value="${esc(s.artist)}"></label>
 <label>เริ่มเล่นที่ เช่น 1:23 (ว่าง = สุ่มช่วงกลางเพลง)<input data-f="start" value="${fmtT(s.start)}"></label>
 <label>คำใบ้/เนื้อเพลงที่พิมพ์เอง บรรทัดละ 1 ท่อน (สูงสุด 3 บรรทัด)<textarea data-f="hint" rows="3">${esc(s.hint)}</textarea></label>
 <label>ชื่ออื่นที่นับว่าถูกด้วย (คั่นด้วย ,)<input data-f="alts" value="${esc(s.alts.join(', '))}"></label>
-<button class="del">🗑 ลบเพลงนี้</button></details>`}
+${s._new?'<button class="g okb">✓ เฉลยถูกแล้ว</button> ':''}<button class="del">🗑 ลบเพลงนี้</button></details>`}
 function render(){
   const q=$('q').value.trim().toLowerCase();
   $('cnt').textContent=songs.length+' เพลง';
@@ -102,13 +124,50 @@ $('list').addEventListener('change',e=>{
   else if(f==='alts')s.alts=v.split(',').map(x=>x.trim()).filter(Boolean);
   else if(f==='hint')s.hint=v.split('\n').slice(0,3).join('\n');
   else s[f]=v;
-  it.querySelector('summary b').textContent=s.title||'(ยังไม่ตั้งชื่อ)';it.querySelector('.warn').textContent=valid(s)?'':'⚠️ ไม่ครบ';
+  it.querySelector('summary b').textContent=s.title||'(ยังไม่ตั้งชื่อ)';s._new=false;it.querySelector('.warn').textContent=warnText(s);
   save();
 });
 $('list').addEventListener('toggle',e=>{const it=e.target;if(it.dataset&&it.dataset.i!=null)songs[+it.dataset.i]._open=it.open},true);
-$('list').addEventListener('click',e=>{if(!e.target.classList.contains('del'))return;const it=e.target.closest('.item');if(confirm('ลบเพลงนี้?')){songs.splice(+it.dataset.i,1);render();save()}});
+$('list').addEventListener('click',e=>{const it=e.target.closest('.item');if(!it)return;const s=songs[+it.dataset.i];
+  if(e.target.classList.contains('okb')){s._new=false;it.querySelector('.warn').textContent=warnText(s);e.target.remove()}
+  else if(e.target.classList.contains('del')){if(confirm('ลบเพลงนี้?')){songs.splice(+it.dataset.i,1);render();save()}}});
 $('add').onclick=()=>{$('q').value='';songs.unshift(Object.assign(mk({}),{_open:true}));render();save();window.scrollTo(0,0)};
 $('q').oninput=render;
+// ---------- นำเข้าจากเพลย์ลิสต์ ----------
+const plMsg=t=>$('plMsg').textContent=t;
+$('plBtn').onclick=()=>{const c=$('plCard');c.style.display=c.style.display==='block'?'none':'block'};
+$('plGo').onclick=()=>{
+  const m=$('pl').value.match(/list=([\w-]+)/)||[null,$('pl').value.trim()];
+  if(!m[1])return plMsg('ใส่ลิงก์เพลย์ลิสต์ก่อน');
+  if(!ws||ws.readyState!==1)return plMsg('⚠️ ยังไม่ได้เชื่อมต่อเซิร์ฟเวอร์');
+  plMsg('⏳ กำลังอ่านเพลย์ลิสต์…');pendingList=m[1];
+  if(window.YT&&YT.Player)startImport(pendingList);
+  else if(!document.getElementById('ytapi')){const s=document.createElement('script');s.id='ytapi';s.src='https://www.youtube.com/iframe_api';s.onerror=()=>plMsg('❌ โหลด YouTube ไม่ได้');document.head.appendChild(s)}
+};
+window.onYouTubeIframeAPIReady=()=>{if(pendingList)startImport(pendingList)};
+function startImport(list){
+  pendingList=null;
+  if(yt){try{yt.destroy()}catch(e){}yt=null}
+  $('ytbox').innerHTML='<div id="ytp"></div>';
+  yt=new YT.Player('ytp',{height:'68',width:'120',playerVars:{listType:'playlist',list},events:{onReady:()=>{
+    let n=0;const poll=setInterval(()=>{
+      const ids=(yt.getPlaylist&&yt.getPlaylist())||[];
+      if(ids.length){clearInterval(poll);gotIds([...new Set(ids)])}
+      else if(++n>24){clearInterval(poll);plMsg('❌ อ่านเพลย์ลิสต์ไม่ได้ (ลิงก์ผิดหรือเป็นส่วนตัว)')}
+    },500)}}});
+}
+function gotIds(ids){
+  curRid=Date.now();plMsg(`⏳ พบ ${ids.length} เพลง กำลังดึงชื่อ…`);
+  ws.send(JSON.stringify({type:'meta',rid:curRid,ids}));
+}
+function onMeta(items){
+  let add=0,dup=0;
+  items.forEach(it=>{
+    if(songs.some(s=>s.yt===it.yt)){dup++;return}
+    const s=mk({yt:it.yt,title:guessTitle(it.title,it.author)||it.title||''});s._new=true;songs.push(s);add++});
+  plMsg(`✓ นำเข้า ${add} เพลง`+(dup?` • ข้าม ${dup} ที่ซ้ำ`:'')+' — ตรวจเฉลยที่ติด 🆕 ได้เลย');
+  if(add){render();save()}
+}
 $('bulkBtn').onclick=()=>{const c=$('bulkCard');c.style.display=c.style.display==='block'?'none':'block'};
 $('bulkGo').onclick=()=>{
   let ok=0,bad=0;
