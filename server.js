@@ -28,12 +28,16 @@ function cleanSongs(arr) {
     if (!s || typeof s !== 'object') return null;
     const yt = String(s.yt || ''), title = String(s.title || '').trim().slice(0, 120);
     if (!VID.test(yt) || !title) return null;
+    const bpm = Number(s.bpm), b0 = Number(s.beat0);
     const st = s.start === null || s.start === undefined || s.start === '' ? null : Number(s.start);
     return {
       id: String(s.id || yt).slice(0, 24), title, yt,
       artist: String(s.artist || '').trim().slice(0, 80),
       start: Number.isFinite(st) ? Math.max(0, Math.min(7200, st)) : null,
       hint: String(s.hint || '').slice(0, 600),
+      auto: s.auto !== false,
+      bpm: Number.isFinite(bpm) && bpm >= 40 && bpm <= 240 ? bpm : null,
+      beat0: Number.isFinite(b0) ? Math.max(0, Math.min(600, b0)) : 0,
       alts: (Array.isArray(s.alts) ? s.alts : []).map((a) => String(a).trim().slice(0, 120)).filter(Boolean).slice(0, 6),
     };
   }).filter(Boolean);
@@ -53,6 +57,60 @@ async function loadMeta(ids) {
     }));
   }
 }
+
+// ---------- เนื้อเพลงอัตโนมัติ (ส่งเฉพาะช่วงที่ใช้ในรอบ ไม่ส่งทั้งเพลง) ----------
+const lyCache = new Map();
+const nrm = (x) => String(x).toLowerCase().replace(/[\s\-_.,!?'"()]/g, '');
+const cleanT = (t) => String(t || '').replace(/[\(\[【].*?[\)\]】]/g, '').replace(/\s*(feat\.?|ft\.?|featuring)\s.*$/i, '').trim();
+function parseLRC(t) {
+  return t.split('\n').map((l) => { const m = l.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)/); return m ? { t: +m[1] * 60 + +m[2], s: m[3].trim() } : null; }).filter((x) => x && x.s.length > 2);
+}
+function chorusStart(L) { // ท่อนฮุก = กลุ่มบรรทัดที่ซ้ำกลุ่มแรก ถ้าไม่มีให้ใช้ช่วงราว 35% ของเพลง
+  const cnt = {}; L.forEach((x) => { const k = nrm(x.s); cnt[k] = (cnt[k] || 0) + 1; });
+  const rep = L.map((x) => cnt[nrm(x.s)] >= 2);
+  let i = rep.findIndex((v, k) => v && rep[k + 1]); if (i < 0) i = rep.indexOf(true);
+  return i >= 0 ? L[i].t : L[Math.floor(L.length * 0.35)].t;
+}
+async function findLyrics(title, artist) {
+  const url = 'https://lrclib.net/api/search?track_name=' + encodeURIComponent(title) + (artist ? '&artist_name=' + encodeURIComponent(artist) : '');
+  const j = await (await fetch(url, { signal: AbortSignal.timeout(5000) })).json();
+  const t = nrm(cleanT(title)), a = nrm(artist || '');
+  const ok = (x) => {
+    const n = nrm(cleanT(x.trackName || ''));
+    if (n.length < 2 || !(n === t || (n.length >= 3 && (t.includes(n) || n.includes(t))))) return false;
+    if (!a) return true;
+    const xa = nrm(x.artistName || '');
+    return xa.length >= 2 && (xa.includes(a) || a.includes(xa));
+  };
+  const c = (Array.isArray(j) ? j : []).filter(ok);
+  return c.find((x) => x.syncedLyrics && nrm(cleanT(x.trackName)) === t) || c.find((x) => x.syncedLyrics) || c[0] || null;
+}
+app.get('/api/lyrics', async (req, res) => {
+  const title = String(req.query.title || '').slice(0, 120), artist = String(req.query.artist || '').slice(0, 80);
+  const from = req.query.from === undefined || req.query.from === '' ? null : Number(req.query.from);
+  if (!title) return res.json({});
+  const key = nrm(title) + '|' + nrm(artist);
+  let hit = lyCache.get(key);
+  if (hit === undefined) {
+    hit = null;
+    try {
+      const x = await findLyrics(title, artist);
+      if (x) hit = { dur: x.duration || 0, synced: x.syncedLyrics ? parseLRC(x.syncedLyrics) : null, plain: x.plainLyrics ? x.plainLyrics.split('\n').map((l) => l.trim()).filter((l) => l.length > 5) : [] };
+    } catch (_) { return res.json({}); }
+    if (lyCache.size > 300) lyCache.clear();
+    lyCache.set(key, hit);
+  }
+  if (!hit) return res.json({});
+  const out = { dur: hit.dur };
+  if (hit.synced && hit.synced.length) {
+    out.hook = chorusStart(hit.synced);
+    const f = from !== null && Number.isFinite(from) ? from : out.hook;
+    out.synced = hit.synced.filter((l) => l.t >= f - 6 && l.t <= f + 45);
+  } else if (hit.plain.length) {
+    const s0 = Math.floor(hit.plain.length * 0.3); out.plain = hit.plain.slice(s0, s0 + 6);
+  }
+  res.json(out);
+});
 
 // ---------- TikTok Live (ต่อใหม่อัตโนมัติ) ----------
 const rooms = new Map();
@@ -78,6 +136,10 @@ function connectRoom(room) {
   const conn = new TikTokLiveConnection(room.username, process.env.SIGN_API_KEY ? { signApiKey: process.env.SIGN_API_KEY } : {});
   room.conn = conn;
   conn.on(WebcastEvent.CHAT, (d) => bcast(room, { type: 'chat', ...info(d), comment: d.comment || d.content || '' }));
+  conn.on(WebcastEvent.LIKE, (d) => {
+    const i = info(d), k = i.id || i.user, e = room.likes.get(k) || { ...i, count: 0 };
+    e.count += Math.max(1, Math.min(Number(d.count) || 1, 100)); room.likes.set(k, e);
+  });
   conn.on(WebcastEvent.SHARE, (d) => bcast(room, { type: 'share', ...info(d) }));
   conn.on(WebcastEvent.SOCIAL, (d) => { if (/share/i.test(JSON.stringify(d.displayType || d.label || ''))) bcast(room, { type: 'share', ...info(d) }); });
   conn.on('disconnected', () => { room.connected = false; say(room, 'หลุดจาก TikTok — กำลังต่อใหม่…'); retry(room); });
@@ -99,7 +161,7 @@ function retry(room, e) {
   }, offline ? 12000 : Math.min(30000, 3000 * room.tries));
 }
 function destroyRoom(room) {
-  room.closed = true; clearTimeout(room.t);
+  room.closed = true; clearTimeout(room.t); clearInterval(room.likeT);
   try { room.conn && room.conn.removeAllListeners(); room.conn && room.conn.disconnect(); } catch (_) {}
   rooms.delete(room.username);
 }
@@ -115,7 +177,7 @@ function join(ws, username) {
   if (!/^[\w.]{1,40}$/.test(username)) return send(ws, { type: 'status', text: 'ชื่อ TikTok ไม่ถูกต้อง' });
   if (ws.room && ws.room !== username) leave(ws);
   let room = rooms.get(username);
-  if (!room) { room = { username, clients: new Set(), conn: null, tries: 0, closed: false, retrying: false, connected: false, t: null }; rooms.set(username, room); connectRoom(room); }
+  if (!room) { room = { username, clients: new Set(), conn: null, tries: 0, closed: false, retrying: false, connected: false, t: null, likes: new Map(), likeT: null }; rooms.set(username, room); connectRoom(room); room.likeT = setInterval(() => { if (room.likes.size) { bcast(room, { type: 'likes', items: [...room.likes.values()] }); room.likes.clear(); } }, 400); }
   room.clients.add(ws); ws.room = username;
   send(ws, { type: 'status', text: room.connected ? 'เชื่อมต่อ @' + username + ' แล้ว ✅' : 'กำลังเชื่อมต่อ @' + username + '...' });
 }
