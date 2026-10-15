@@ -28,6 +28,7 @@ small,.mute{color:var(--mute)}
 summary{cursor:pointer;padding:10px 0;display:flex;gap:8px;align-items:center;list-style:none}
 summary b{flex:1;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .n{color:var(--cyan);min-width:28px}.warn{color:var(--yel);font-size:13px}
+label.chk{display:flex;gap:8px;align-items:center;color:var(--ink)}label.chk input{width:auto;margin:0}
 label{display:block;margin:8px 0;font-size:13px;color:var(--mute)}label input,label textarea{margin-top:4px;color:var(--ink)}
 .del{background:#5b1b3a;margin:6px 0 10px}
 .card{background:var(--card);border-radius:14px;padding:12px;margin:10px 0;display:none}
@@ -87,7 +88,7 @@ function guessTitle(t,author){
 }
 const warnText=s=>!valid(s)?'⚠️ ไม่ครบ':(s._new?'🆕 ตรวจเฉลย':'');
 const valid=s=>!!(s.title.trim()&&s.yt);
-const mk=o=>({id:o.id||uid(),title:o.title||'',artist:o.artist||'',link:o.yt?'https://youtu.be/'+o.yt:(o.link||''),yt:o.yt||ytId(o.link),start:o.start==null?null:o.start,hint:o.hint||'',alts:o.alts||[]});
+const mk=o=>({id:o.id||uid(),title:o.title||'',artist:o.artist||'',link:o.yt?'https://youtu.be/'+o.yt:(o.link||''),yt:o.yt||ytId(o.link),start:o.start==null?null:o.start,hint:o.hint||'',alts:o.alts||[],auto:o.auto!==false,bpm:o.bpm||null,beat0:o.beat0||0});
 let ws,code='',songs=[],timer=null,live=false,yt=null,curRid=0,pendingList=null;
 $('code').value=(location.hash||'').replace('#','').slice(0,6);
 function connect(){
@@ -102,15 +103,18 @@ function connect(){
 }
 $('go').onclick=()=>{code=$('code').value.trim();if(code.length!==6)return $('err').textContent='ใส่รหัส 6 หลัก';$('err').textContent='';connect()};
 function save(){clearTimeout(timer);$('saved').textContent='กำลังบันทึก…';timer=setTimeout(()=>{
-  const out=songs.filter(valid).map(s=>({id:s.id,title:s.title.trim(),artist:s.artist.trim(),yt:s.yt,start:s.start,hint:s.hint,alts:s.alts}));
+  const out=songs.filter(valid).map(s=>({id:s.id,title:s.title.trim(),artist:s.artist.trim(),yt:s.yt,start:s.start,hint:s.hint,alts:s.alts,auto:s.auto!==false,bpm:s.bpm,beat0:s.beat0}));
   if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:'libSet',songs:out}));else $('saved').textContent='⚠️ ยังไม่ได้เชื่อมต่อ';},500)}
 function card(s,i){return `<details class="item" data-i="${i}"${s._open?' open':''}><summary><span class="n">${i+1}</span><b>${esc(s.title||'(ยังไม่ตั้งชื่อ)')}</b><span class="warn">${warnText(s)}</span></summary>
 <label>ชื่อเพลง (เฉลย)<input data-f="title" value="${esc(s.title)}"></label>
 <label>ลิงก์ YouTube<input data-f="link" value="${esc(s.link)}" placeholder="https://youtu.be/..."></label>
 <label>ศิลปิน (ไม่บังคับ — เปิดเป็นคำใบ้กลางรอบ)<input data-f="artist" value="${esc(s.artist)}"></label>
 <label>เริ่มเล่นที่ เช่น 1:23 (ว่าง = สุ่มช่วงกลางเพลง)<input data-f="start" value="${fmtT(s.start)}"></label>
-<label>คำใบ้/เนื้อเพลงที่พิมพ์เอง บรรทัดละ 1 ท่อน (สูงสุด 3 บรรทัด)<textarea data-f="hint" rows="3">${esc(s.hint)}</textarea></label>
+<label>คำใบ้ที่พิมพ์เอง บรรทัดละ 1 ท่อน สูงสุด 3 บรรทัด (ถ้ากรอก จะใช้แทนเนื้อเพลงอัตโนมัติ)<textarea data-f="hint" rows="3">${esc(s.hint)}</textarea></label>
 <label>ชื่ออื่นที่นับว่าถูกด้วย (คั่นด้วย ,)<input data-f="alts" value="${esc(s.alts.join(', '))}"></label>
+<label class="chk"><input type="checkbox" data-f="auto" ${s.auto!==false?'checked':''}> ดึงเนื้อเพลงอัตโนมัติ (ปิดถ้าเนื้อไม่ตรงเพลง)</label>
+<label>BPM (ไม่บังคับ — ให้เอฟเฟกต์ตรงจังหวะ ว่าง = จังหวะทั่วไป)<input data-f="bpm" inputmode="numeric" value="${s.bpm||''}" placeholder="เช่น 120"></label>
+<label>จังหวะแรกอยู่ที่วินาทีที่ (ไม่บังคับ)<input data-f="beat0" inputmode="decimal" value="${s.beat0||''}" placeholder="เช่น 0.4"></label>
 ${s._new?'<button class="g okb">✓ เฉลยถูกแล้ว</button> ':''}<button class="del">🗑 ลบเพลงนี้</button></details>`}
 function render(){
   const q=$('q').value.trim().toLowerCase();
@@ -119,7 +123,10 @@ function render(){
 }
 $('list').addEventListener('change',e=>{
   const it=e.target.closest('.item');if(!it||!e.target.dataset.f)return;const s=songs[+it.dataset.i],f=e.target.dataset.f,v=e.target.value;
-  if(f==='link'){s.link=v;s.yt=ytId(v)}
+  if(f==='auto')s.auto=e.target.checked;
+  else if(f==='bpm'){const n=parseFloat(v);s.bpm=n>=40&&n<=240?n:null}
+  else if(f==='beat0')s.beat0=Math.max(0,parseFloat(v)||0);
+  else if(f==='link'){s.link=v;s.yt=ytId(v)}
   else if(f==='start')s.start=parseT(v);
   else if(f==='alts')s.alts=v.split(',').map(x=>x.trim()).filter(Boolean);
   else if(f==='hint')s.hint=v.split('\n').slice(0,3).join('\n');
@@ -177,7 +184,7 @@ $('bulkGo').onclick=()=>{
   $('bulkMsg').textContent=`เพิ่ม ${ok} เพลง`+(bad?` • ข้าม ${bad} บรรทัดที่ไม่ครบ`:'');
   if(ok){$('bulk').value='';render();save()}
 };
-$('exp').onclick=()=>{const b=new Blob([JSON.stringify({songs:songs.filter(valid).map(({_open,link,...r})=>r)},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='songs.json';a.click()};
+$('exp').onclick=()=>{const b=new Blob([JSON.stringify({songs:songs.filter(valid).map(({_open,_new,link,...r})=>r)},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='songs.json';a.click()};
 $('imp').onclick=()=>$('file').click();
 $('file').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());const arr=Array.isArray(j)?j:j.songs;
   arr.forEach(o=>{const s=mk(o);if(valid(s)&&!songs.some(x=>x.yt===s.yt&&x.title===s.title))songs.push(s)});render();save()}catch(_){alert('ไฟล์ไม่ถูกต้อง')}e.target.value=''};
