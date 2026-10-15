@@ -13,7 +13,7 @@ h1,.slot,.pill,button,.wrow b{font-family:Mitr,sans-serif}
 button{border:0;border-radius:14px;padding:12px 18px;font-size:16px;font-weight:600;color:#fff;background:var(--pink);cursor:pointer}
 button.ghost{background:#ffffff1a}
 small{color:var(--mute)}a{color:var(--cyan)}
-.bg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.bg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none;opacity:calc(.75 + var(--b,0)*.25)}
 .bg i{position:absolute;bottom:-60px;opacity:.12;font-style:normal;animation:rise linear infinite}
 @keyframes rise{to{transform:translateY(-115vh) rotate(40deg)}}
 #setup{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:36px 22px;display:flex;flex-direction:column;gap:10px;text-align:center}
@@ -27,8 +27,7 @@ small{color:var(--mute)}a{color:var(--cyan)}
 .pill{background:var(--card);border:1px solid #ffffff22;border-radius:99px;padding:6px 16px;font-size:16px}
 #timer{color:var(--yel);min-width:84px;text-align:center}
 .eq{display:flex;gap:3px;align-items:flex-end;height:22px}.eq i{width:4px;height:4px;background:var(--cyan);border-radius:2px;transition:height .2s}
-.eq.on i{animation:eq .7s ease-in-out infinite alternate}.eq i:nth-child(2){animation-delay:.15s}.eq i:nth-child(3){animation-delay:.3s}.eq i:nth-child(4){animation-delay:.45s}.eq i:nth-child(5){animation-delay:.1s}
-@keyframes eq{from{height:4px}to{height:22px}}
+.eq.on i{background:var(--yel)}
 .rank{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;margin-top:6px}
 .rk{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:16px 2px 7px;background:linear-gradient(160deg,#241a4d,var(--card));border:1px solid #ffffff14;border-radius:14px}
 .rk i{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font:600 12px Mitr;font-style:normal;background:var(--pink);border-radius:99px;padding:0 9px}
@@ -38,7 +37,7 @@ small{color:var(--mute)}a{color:var(--cyan)}
 .rk.r0 i{background:var(--yel);color:#1a1438}.rk.empty{opacity:.45}
 .ph{width:36px;height:36px;border-radius:50%;border:2px dashed #ffffff55}
 .stage{width:100%;display:flex;justify-content:center;padding:6px 0 4px}
-.deck{position:relative;width:min(300px,70vw);aspect-ratio:1;margin:14px 0 6px}
+.deck{position:relative;width:min(300px,70vw);aspect-ratio:1;margin:14px 0 6px;transform:scale(calc(1 + var(--b,0)*.035))}
 .ring{position:absolute;inset:-6%;width:112%;height:112%;transform:rotate(-90deg);transition:opacity .5s}
 .ring circle{fill:none;stroke-width:2.2}.trk{stroke:#ffffff18}
 .prg{stroke:var(--cyan);stroke-linecap:round;stroke-dasharray:301.6;stroke-dashoffset:0;filter:drop-shadow(0 0 3px var(--cyan))}
@@ -92,6 +91,44 @@ body.fs #test{display:none}
 #yt{position:fixed;right:0;bottom:0;width:200px;height:113px;opacity:.02;pointer-events:none;z-index:-1}
 #pipv{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.vinyl,.logo,.bg i{animation:none}}
+#lyricLayer{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+.fw{position:absolute;font-family:Mitr,sans-serif;font-weight:600;white-space:nowrap;text-shadow:0 2px 12px #000a,0 0 24px currentColor;transform:rotate(var(--rot)) scale(calc(1 + var(--b,0)*.1));animation:fwin .45s cubic-bezier(.2,1.7,.4,1);transition:opacity .5s}
+.fw.out{opacity:0}
+@keyframes fwin{from{transform:rotate(var(--rot)) scale(.2);opacity:0}}
+#flash{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(circle at 50% 40%,#ff2e8855,transparent 60%);opacity:0}
+#flash.k{animation:fl .3s ease-out}@keyframes fl{from{opacity:.7}to{opacity:0}}
+.ripple{position:absolute;inset:0;border-radius:50%;border:3px solid var(--cyan);animation:rp .8s ease-out forwards;pointer-events:none}
+@keyframes rp{to{transform:scale(1.6);opacity:0}}
+#bottle{position:fixed;left:10px;bottom:14px;width:70px;height:110px;z-index:7;display:none;transition:left .7s cubic-bezier(.2,.9,.3,1),bottom .7s cubic-bezier(.2,.9,.3,1),width .7s cubic-bezier(.2,.9,.3,1),height .7s cubic-bezier(.2,.9,.3,1)}
+#bottle.big{left:calc(50% - 110px);bottom:calc(46% - 150px);width:220px;height:350px}
+.neck{position:absolute;top:6%;left:28%;width:44%;height:18%;border:3px solid #ffffff77;border-bottom:0;border-radius:6px 6px 0 0;background:#ffffff10}
+.cork{position:absolute;top:0;left:30%;width:40%;height:9%;background:linear-gradient(#c58b4e,#8d5a2b);border-radius:6px 6px 3px 3px}
+.bbody{position:absolute;left:0;right:0;bottom:0;height:78%;border:3px solid #ffffff77;border-radius:26% 26% 18% 18%/14% 14% 10% 10%;background:linear-gradient(100deg,#ffffff26,#ffffff08 45%,#ffffff22);overflow:hidden;box-shadow:0 0 24px #27e3ff44,inset 0 0 24px #ffffff18}
+.bbody::after{content:"";position:absolute;left:9%;top:8%;width:9%;height:58%;border-radius:99px;background:#ffffff33}
+.liquid{position:absolute;left:0;right:0;bottom:0;height:var(--fill,0%);background:linear-gradient(180deg,#ff2e88bb,#7a1fa2dd);transition:height .6s}
+.liquid::before{content:"";position:absolute;left:-10%;right:-10%;top:-6px;height:12px;border-radius:50%;background:#ff7ab8aa;animation:wave 2s ease-in-out infinite alternate}
+@keyframes wave{to{transform:translateX(6%)}}
+#bpile{position:absolute;inset:0}
+.bav{position:absolute;width:16%;aspect-ratio:1;left:var(--x);bottom:var(--y);border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--pink),var(--cyan));display:grid;place-items:center;font:600 9px Mitr;border:1.5px solid #fff;animation:drop .9s cubic-bezier(.3,1.4,.5,1)}
+.bav img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@keyframes drop{from{transform:translateY(-420%);opacity:0}}
+#bmini{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:600 11px Mitr;background:var(--card);border-radius:99px;padding:1px 8px;white-space:nowrap}
+#bottle.big #bmini{display:none}
+#bscene{position:fixed;inset:0;background:#0d0a1ed8;z-index:6;display:none;flex-direction:column;align-items:center;padding:7vh 16px 5vh;text-align:center;gap:6px}
+#bscene h1{margin:0;font-size:30px}#bnum{font:600 40px Mitr;color:var(--yel)}
+#results{position:fixed;inset:0;z-index:12;background:radial-gradient(60% 40% at 50% 0,#5b1b8fcc,#0d0a1ef5);display:none;flex-direction:column;align-items:center;padding:16px;overflow:auto}
+.rbox{width:min(460px,100%);display:flex;flex-direction:column;gap:12px;text-align:center}
+#rTitle{font-size:30px;margin:6px 0 0}#rSus{font:600 26px Mitr;color:var(--yel);min-height:36px}
+#rList{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:var(--card);border:1px solid #ffffff14;min-height:64px;position:relative}
+.rrow.hid{filter:blur(5px) brightness(.6)}
+.rk0{font:600 24px Mitr;width:34px}.nm0{flex:1;text-align:left;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pt{font:600 22px Mitr;color:var(--yel)}
+.rrow.show{animation:flip .7s cubic-bezier(.2,1.4,.4,1)}
+@keyframes flip{from{transform:rotateX(90deg) scale(.8);opacity:0}}
+.rrow.champ{background:linear-gradient(90deg,#ffd23f55,#ff2e8866);border-color:var(--yel);box-shadow:0 0 40px #ffd23f88;transform:scale(1.04);min-height:86px;margin-top:10px}
+.rrow.champ::before{content:"👑";position:absolute;top:-20px;left:14px;font-size:28px}
+#rStats{display:none;font-size:15px;color:var(--mute);line-height:1.7}#rStats b{color:var(--ink)}
+.row2{display:none;gap:10px;justify-content:center}
 </style>
 </head>
 <body>
@@ -103,6 +140,10 @@ body.fs #test{display:none}
   <input id="ws" placeholder="@username" autocapitalize="off" autocomplete="off">
   <small>เวลาต่อรอบ</small>
   <select id="dur"><option value="10">10 วินาที</option><option value="15">15 วินาที</option><option value="20">20 วินาที</option><option value="30">30 วินาที</option></select>
+  <small>จำนวนรอบ (ครบแล้วสรุปผลแบบลุ้นๆ)</small>
+  <select id="rounds"><option value="5">5 รอบ</option><option value="10" selected>10 รอบ</option><option value="15">15 รอบ</option><option value="20">20 รอบ</option><option value="0">ไม่จำกัด (กดจบเกมเอง)</option></select>
+  <small>ขวดแก้ว: ต้องกดใจในไลฟ์ให้ครบก่อนเริ่มรอบถัดไป (ต้องใส่ชื่อ TikTok)</small>
+  <select id="btgt"><option value="1000" selected>1,000 ใจ</option><option value="500">500 ใจ</option><option value="300">300 ใจ</option><option value="100">100 ใจ</option><option value="0">ปิดขวด</option></select>
   <small>ตอบเร็วได้ 10–30 คะแนน • ได้คะแนนสูงสุด 3 คนต่อรอบ • เพลงทั้งหมดเพิ่มเองที่หน้าจัดการเพลง</small>
   <button id="go">เชื่อมต่อ</button>
 </div>
@@ -118,11 +159,14 @@ body.fs #test{display:none}
   </div></div>
   <div id="slots"></div>
   <div id="artist"></div>
-  <div id="lyricBg"></div>
   <div id="winner"></div>
-  <div id="test"><button id="pause" class="ghost">⏸ หยุด</button><button id="skip" class="ghost">⏭ ข้าม</button><button id="pip" class="ghost">🗗 PiP</button></div>
+  <div id="test"><button id="pause" class="ghost">⏸ หยุด</button><button id="skip" class="ghost">⏭ ข้าม</button><button id="fin" class="ghost">🏁 จบเกม</button><button id="pip" class="ghost">🗗 PiP</button></div>
 </div>
 <button id="fsBtn" title="เต็มจอ">⛶</button>
+<div id="lyricLayer"></div><div id="flash"></div>
+<div id="bscene"><h1>🫙 ขวดแก้ว</h1><div id="bsub">กดใจในไลฟ์ให้ครบ <b id="btarget">1,000</b> เพื่อไปรอบถัดไป</div><div id="bnum">0 / 1,000</div><div style="flex:1"></div><button id="bskip" class="ghost">⏭ ข้ามขวด</button></div>
+<div id="bottle"><div class="neck"></div><div class="cork"></div><div class="bbody"><div class="liquid"></div><div id="bpile"></div></div><div id="bmini"></div></div>
+<div id="results"><div class="rbox"><h1 id="rTitle">🏆 สรุปผล</h1><div id="rSus"></div><div id="rList"></div><div id="rStats"></div><div class="row2" id="rBtns"><button id="rAgain">▶ เล่นใหม่</button><button id="rClose" class="ghost">ปิด</button></div><button id="rSkip" class="ghost">ข้าม ▶▶</button></div></div>
 <div id="toast"></div>
 <div id="tap"><div class="lobby">
   <h1>เตรียมพร้อม</h1>
@@ -149,6 +193,8 @@ let active=false,paused=false,busy=false,tick=null,nextTimer=null,graceTimer=nul
 let sock=null,sessCode='',backoff=1000,lastMsg=0,players={},winners=[],tStart=0,pausedAt=0;
 let nextPending=false,nextAt=0,nextMs=6000,graceOn=false,graceAt=0,graceMs=3000,wl=null;
 try{lib=JSON.parse(localStorage.getItem('lib2')||'[]')}catch(e){}
+let phase='idle',finishFlag=false,totalRounds=10,bottleOn=false,bottle={count:0,target:1000,slot:0,map:new Map()},stats={fast:null,correct:0},lastBeat=-1,lyTick=null,lineKey=-1;
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ---------- ตกแต่ง ----------
 (()=>{const b=$('bg');for(let i=0;i<16;i++){const e=document.createElement('i');e.textContent=['♪','♫','♬','🎵'][i%4];e.style.cssText=`left:${Math.random()*100}%;font-size:${16+Math.random()*28}px;animation-duration:${10+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;b.appendChild(e)}})();
@@ -157,7 +203,7 @@ function toast(t,ms=2800){const e=$('toast');e.textContent=t;e.classList.add('sh
 
 // ---------- เชื่อมต่อ ----------
 $('go').onclick=()=>{
-  DUR=+$('dur').value;
+  DUR=+$('dur').value;totalRounds=+$('rounds').value;bottle.target=+$('btgt').value;bottleOn=bottle.target>0&&!!$('ws').value.trim();
   $('setup').style.display='none';$('game').style.display='flex';$('timer').textContent='⏱ '+DUR;drawBoard();
   $('tap').style.display='flex';$('adminUrl').textContent=location.host+'/admin';
   $('stTk').textContent=$('ws').value.trim()?'⏳ กำลังเชื่อมต่อ TikTok…':'⚠️ ไม่ได้ใส่ชื่อ TikTok (จะไม่รับคอมเมนต์)';
@@ -193,14 +239,15 @@ function connectWS(){
       case 'library':setLib(d.lib.songs);toast('อัปเดตคลังเพลง '+lib.length+' เพลง');break;
       case 'status':$('stTk').textContent=d.text;toast(d.text,6000);break;
       case 'chat':onComment(d.user||'?',d.comment||'',d.avatar,d.id);break;
-      case 'share':onShare(d);break}};
+      case 'share':onShare(d);break;
+      case 'likes':onLikes(d.items||[]);break}};
   w.onclose=()=>{if(sock===w){setTimeout(connectWS,backoff);backoff=Math.min(15000,backoff*2)}};
   w.onerror=()=>{try{w.close()}catch(e){}};
 }
 setInterval(()=>{if(sock&&sock.readyState===1){wsSend({type:'ping'});if(Date.now()-lastMsg>50000){try{sock.close()}catch(e){}}}},20000);
 
 // ---------- เริ่ม / รอบเกม ----------
-$('tapb').onclick=()=>{started=true;$('tap').style.display='none';try{player.unMute();player.setVolume(100)}catch(e){}lockScreen();next()};
+$('tapb').onclick=()=>{started=true;unlockAudio();updateBottle();$('tap').style.display='none';try{player.unMute();player.setVolume(100)}catch(e){}lockScreen();next()};
 async function lockScreen(){try{if('wakeLock' in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&started)lockScreen()});
 const setCoverUrl=id=>`url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)`;
@@ -209,22 +256,31 @@ function loadSong(song){
     const to=setTimeout(()=>{waiter=null;rej(new Error('timeout'))},10000);
     waiter={res:()=>{clearTimeout(to);res()},rej:e=>{clearTimeout(to);rej(e)}};
     player.loadVideoById({videoId:song.yt,startSeconds:song.start||0});
-  }).then(()=>{if(song.start==null){const d=player.getDuration();if(d>30)player.seekTo(Math.floor(d*(.2+Math.random()*.4)),true)}});
+  });
 }
 async function next(){
   if(busy)return;busy=true;
-  clearTimeout(nextTimer);clearTimeout(graceTimer);clearInterval(tick);nextPending=false;graceOn=false;active=false;winners=[];
+  clearTimeout(nextTimer);clearTimeout(graceTimer);clearInterval(tick);clearInterval(lyTick);nextPending=false;graceOn=false;active=false;winners=[];
   try{
     if(!lib.length){busy=false;$('winner').className='lose';$('winner').textContent='ยังไม่มีเพลง — เพิ่มที่หน้าจัดการเพลง';nextTimer=setTimeout(next,4000);return}
     if(!order.length||idx+1>=order.length){order=shuffle([...lib.keys()]);idx=-1}
-    const song=lib[order[++idx]];rnd++;$('rnd').textContent=rnd;
+    const song=lib[order[++idx]];rnd++;$('rnd').textContent=rnd;phase='loading';
     clearLyric();$('winner').textContent='';$('winner').className='';$('artist').textContent='';
     $('label').classList.remove('reveal');$('deck').classList.remove('reveal');
     const p=$('prog');p.style.transition='none';p.style.strokeDashoffset=0;$('timer').textContent='⏱ '+DUR;
     cur={song,ans:song.title,alts:[...new Set([song.title,...(song.alts||[])].map(norm))].filter(x=>x.length>=2),hint:(song.hint||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,3)};
     $('label').style.backgroundImage=$('sleeve').style.backgroundImage=setCoverUrl(song.yt);setCover(song.yt);
     $('slots').innerHTML=chars(cur.ans).map(c=>c.trim()===''?'<div class="slot gap"></div>':'<div class="slot">&nbsp;</div>').join('');
+    const lyP=(!cur.hint.length&&song.auto!==false)?fetchLyrics(song):Promise.resolve(null);let lyDone=false;lyP.then(()=>{lyDone=true});
     await loadSong(song);
+    if(!lyDone){try{player.pauseVideo()}catch(e){}}
+    const ly=await lyP,dur=player.getDuration()||0;
+    if(ly&&ly.synced&&ly.dur&&dur&&Math.abs(ly.dur-dur)>5){ly.synced=null;ly.hook=null}
+    cur.synced=(ly&&ly.synced&&ly.synced.length)?ly.synced:null;cur.plain=(ly&&ly.plain)||[];
+    let st=null;
+    if(song.start==null){if(cur.synced&&ly.hook!=null)st=Math.max(0,Math.min(ly.hook-1,dur-DUR-3));else if(dur>30)st=Math.floor(dur*(.2+Math.random()*.4))}
+    if(st!=null)player.seekTo(st,true);
+    try{player.playVideo()}catch(e){}
     busy=false;startRound();
   }catch(e){console.error(e);busy=false;toast('เล่นเพลงนี้ไม่ได้ ข้ามไปเพลงถัดไป');nextTimer=setTimeout(next,1200)}
 }
@@ -234,7 +290,7 @@ function reveal(n){
 }
 function startRound(){
   if(paused)return;
-  active=true;winners=[];let t=DUR;left=t;tStart=performance.now();
+  active=true;phase='round';lastBeat=-1;winners=[];let t=DUR;left=t;tStart=performance.now();
   $('vinyl').classList.add('on');$('arm').classList.add('on');$('eq').classList.add('on');
   const p=$('prog');void p.getBoundingClientRect();p.style.transition=`stroke-dashoffset ${DUR}s linear`;p.style.strokeDashoffset=301.6;
   const L=[.8,.5,.2].map(f=>Math.round(DUR*f)),m1=Math.round(DUR*.7),m2=Math.round(DUR*.4),n=chars(cur.ans).length;
@@ -242,12 +298,21 @@ function startRound(){
     t--;left=t;$('timer').textContent='⏱ '+t;
     if(t===m1)reveal(Math.ceil(n*.15));
     if(t===m2){reveal(Math.ceil(n*.2));if(cur.song.artist)$('artist').textContent='🎤 '+cur.song.artist}
-    const li=L.indexOf(t);if(li>-1&&li<cur.hint.length)showLine(cur.hint[li],2.2);
+    const li=L.indexOf(t);
+    if(li>-1){if(cur.hint.length){if(li<cur.hint.length)showLine(cur.hint[li],2.2)}
+      else if(!cur.synced&&cur.plain.length>2&&li<cur.plain.length)showLine(cur.plain[li],2.2)}
     if(t<=0)end();
   }catch(e){console.error(e)}},1000);
+  clearInterval(lyTick);lineKey=-1;
+  if(cur.synced)lyTick=setInterval(()=>{ // เนื้อเพลงตามเสียง: ขึ้นทีละคำสุ่มตำแหน่งทั่วจอ
+    if(paused||!active||(performance.now()-tStart)/1000<DUR*.15)return;
+    let now;try{now=player.getCurrentTime()+.15}catch(e){return}
+    const S=cur.synced;let k=-1;for(let i=0;i<S.length;i++){if(S[i].t<=now)k=i;else break}
+    if(k>-1&&k!==lineKey){lineKey=k;const nx=S[k+1];showLine(S[k].s,Math.min(nx?nx.t-S[k].t:4,4.5)*.85)}
+  },150);
 }
 function end(){
-  if(!active)return;active=false;graceOn=false;clearTimeout(graceTimer);clearInterval(tick);
+  if(!active)return;active=false;graceOn=false;clearTimeout(graceTimer);clearInterval(tick);clearInterval(lyTick);phase='reveal';
   try{player.pauseVideo()}catch(e){}
   $('vinyl').classList.remove('on');$('arm').classList.remove('on');$('eq').classList.remove('on');
   const els=[...$('slots').children],cs=chars(cur.ans);
@@ -256,19 +321,32 @@ function end(){
   if(cur.song.artist)$('artist').textContent='🎤 '+cur.song.artist;
   $('winner').className=winners.length?'':'lose';
   $('winner').innerHTML=winners.length?winnersHTML():'⏰ หมดเวลา!';
-  nextPending=true;nextAt=performance.now();nextMs=6000;nextTimer=setTimeout(()=>{nextPending=false;next()},6000);
+  nextPending=true;nextAt=performance.now();nextMs=6000;nextTimer=setTimeout(afterReveal,6000);
 }
-$('skip').onclick=()=>{if(!cur||paused||busy)return;if(active)end();else{clearTimeout(nextTimer);nextPending=false;next()}};
+$('skip').onclick=()=>{if(!cur||paused||busy)return;if(active)end();else if(phase==='reveal'){clearTimeout(nextTimer);afterReveal()}};
 
-// ---------- เนื้อเพลง/คำใบ้ที่พิมพ์เอง: ขึ้นทีละคำ ----------
-function clearLyric(){wTimers.forEach(clearTimeout);wTimers=[];$('lyricBg').innerHTML=''}
+// ---------- เนื้อเพลง/คำใบ้: ขึ้นทีละคำ สุ่มตำแหน่งทั่วจอ ----------
+let placed=[],pipLine='';const COLORS=['#fff6e6','#ffd23f','#27e3ff','#ff7ab8','#3dffb0'];
+function clearLyric(){wTimers.forEach(clearTimeout);wTimers=[];$('lyricLayer').innerHTML='';placed=[];pipLine=''}
 function segWords(t){try{return [...new Intl.Segmenter('th',{granularity:'word'}).segment(t)].map(x=>x.segment).filter(x=>x.trim())}catch(e){return t.split(/\s+/)}}
+function popWord(word){
+  const W=innerWidth,H=innerHeight,fs=28+Math.random()*30,w=Math.max(40,word.length*fs*.6),h=fs*1.4;
+  let x=0,y=0,ok=false;
+  for(let k=0;k<14&&!ok;k++){x=8+Math.random()*Math.max(1,W-w-16);y=56+Math.random()*Math.max(1,H-h-110);ok=!placed.some(r=>x<r.x+r.w&&x+w>r.x&&y<r.y+r.h&&y+h>r.y)}
+  const e=document.createElement('span');e.className='fw';e.textContent=word;
+  e.style.cssText=`left:${x}px;top:${y}px;font-size:${fs}px;color:${COLORS[Math.random()*COLORS.length|0]};--rot:${((Math.random()-.5)*24).toFixed(1)}deg`;
+  $('lyricLayer').appendChild(e);const r={x,y,w,h};placed.push(r);pipLine+=(pipLine?' ':'')+word;
+  wTimers.push(setTimeout(()=>e.classList.add('out'),2400),setTimeout(()=>{e.remove();placed=placed.filter(q=>q!==r)},2900));
+}
 function showLine(text,span){
-  wTimers.forEach(clearTimeout);wTimers=[];
-  const ws=segWords(text);if(!ws.length)return;
-  const box=$('lyricBg');box.innerHTML=ws.map(w=>`<span class="w">${esc(w)}</span>`).join('');
-  const els=[...box.children],step=Math.max(.12,span/ws.length);
-  els.forEach((e,i)=>wTimers.push(setTimeout(()=>{els.forEach(x=>x.classList.remove('cur'));e.classList.add('on','cur')},i*step*1000)));
+  const ws=segWords(text);if(!ws.length)return;pipLine='';
+  const step=Math.max(.15,span/ws.length);
+  ws.forEach((w,i)=>wTimers.push(setTimeout(()=>popWord(w),i*step*1000)));
+}
+async function fetchLyrics(song){
+  try{const c=new AbortController(),to=setTimeout(()=>c.abort(),4500);
+    const r=await fetch('/api/lyrics?title='+encodeURIComponent(song.title)+'&artist='+encodeURIComponent(song.artist||'')+(song.start!=null?'&from='+song.start:''),{signal:c.signal});
+    clearTimeout(to);const j=await r.json();return j&&(j.synced||j.plain)?j:null}catch(e){return null}
 }
 
 // ---------- ตอบ / คะแนน ----------
@@ -285,6 +363,7 @@ function onComment(user,text,avatar,id){
   if(paused||!active||!cur||winners.some(w=>w.key===key))return;
   if(!matches(text))return;
   const time=(performance.now()-tStart)/1000,gain=10+Math.round(20*Math.max(0,1-time/DUR)),p=addPoints(key,user,avatar,gain);
+  p.correct=(p.correct||0)+1;stats.correct++;if(!stats.fast||time<stats.fast.time)stats.fast={name:user,time,song:cur.ans};
   winners.push({key,name:user,avatar:p.avatar,gain,time});drawBoard();
   $('winner').className='';$('winner').innerHTML=winnersHTML();
   if(winners.length===1){speak(user+' ตอบถูก');burst();graceOn=true;graceAt=performance.now();graceMs=3000;graceTimer=setTimeout(()=>end(),3000)}
@@ -305,12 +384,12 @@ function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';spe
 
 // ---------- หยุดชั่วคราว ----------
 function setPause(on){
-  if(on===paused)return;if(on&&(!cur||busy))return toast('รอเพลงโหลดก่อน');
+  if(on===paused)return;if(on&&(busy||!['round','reveal'].includes(phase)))return toast('หยุดได้ตอนเล่นรอบหรือตอนเฉลย');
   paused=on;$('pauseOv').style.display=on?'flex':'none';$('pause').textContent=on?'▶ เล่นต่อ':'⏸ หยุด';
   const p=$('prog');
   if(on){
     if(active){try{player.pauseVideo()}catch(e){}$('vinyl').classList.remove('on');$('arm').classList.remove('on');$('eq').classList.remove('on');
-      const v=parseFloat(getComputedStyle(p).strokeDashoffset);p.style.transition='none';p.style.strokeDashoffset=isNaN(v)?0:v;wTimers.forEach(clearTimeout);wTimers=[]}
+      const v=parseFloat(getComputedStyle(p).strokeDashoffset);p.style.transition='none';p.style.strokeDashoffset=isNaN(v)?0:v;clearLyric()}
     if(graceOn){clearTimeout(graceTimer);graceMs-=performance.now()-graceAt}
     if(nextPending){clearTimeout(nextTimer);nextMs-=performance.now()-nextAt}
     pausedAt=performance.now();
@@ -319,7 +398,7 @@ function setPause(on){
     if(active){try{player.playVideo()}catch(e){}$('vinyl').classList.add('on');$('arm').classList.add('on');$('eq').classList.add('on');
       const rem=Math.max(.1,DUR-(performance.now()-tStart)/1000);void p.getBoundingClientRect();p.style.transition=`stroke-dashoffset ${rem}s linear`;p.style.strokeDashoffset=301.6}
     if(graceOn){graceAt=performance.now();graceTimer=setTimeout(()=>end(),Math.max(200,graceMs))}
-    if(nextPending){nextAt=performance.now();nextTimer=setTimeout(()=>{nextPending=false;next()},Math.max(200,nextMs))}
+    if(nextPending){nextAt=performance.now();nextTimer=setTimeout(afterReveal,Math.max(200,nextMs))}
   }
 }
 $('pause').onclick=()=>setPause(!paused);$('resume').onclick=()=>setPause(false);
@@ -354,7 +433,7 @@ function drawPip(){
   const slots=[...$('slots').children].map(e=>e.classList.contains('gap')?' ':(e.classList.contains('on')?e.textContent:'＿')).join(' ');
   c.fillStyle='#27e3ff';let fs=30;c.font=`600 ${fs}px Mitr,sans-serif`;while(fs>14&&c.measureText(slots).width>W-30){fs-=2;c.font=`600 ${fs}px Mitr,sans-serif`}
   c.fillText(slots,W/2,430);
-  const lw=[...$('lyricBg').querySelectorAll('.w.on')].map(x=>x.textContent).join(' ');
+  const lw=pipLine;
   c.fillStyle='#ffd23f';c.font='600 24px Mitr,sans-serif';wrapText(c,lw,W-40).slice(-2).forEach((l,i)=>c.fillText(l,W/2,480+i*32));
   c.font='600 20px Sarabun,sans-serif';c.fillStyle='#3dffb0';
   winners.slice(0,3).forEach((w,i)=>c.fillText(`${['🥇','🥈','🥉'][i]} ${w.name.slice(0,14)}  ⚡${w.time.toFixed(1)}วิ  +${w.gain}`,W/2,575+i*24));
@@ -372,6 +451,110 @@ $('pip').onclick=async()=>{
 };
 $('pipv').addEventListener('enterpictureinpicture',()=>{clearInterval(pipTimer);pipTimer=setInterval(drawPip,100)});
 $('pipv').addEventListener('leavepictureinpicture',()=>clearInterval(pipTimer));
+
+// ---------- เอฟเฟกต์เสียง ----------
+let ac=null;
+function unlockAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}}
+function sfx(f,d=.12,type='sine',v=.07){try{if(!ac)return;const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d)}catch(e){}}
+const fanfare=()=>[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>sfx(f,.35,'triangle',.09),i*130));
+
+// ---------- หลังเฉลย: จบเกม / ขวดแก้ว / รอบถัดไป ----------
+function afterReveal(){
+  nextPending=false;
+  if(finishFlag||(totalRounds&&rnd>=totalRounds))return showResults();
+  if(!bottleOn)return next();
+  if(bottle.count>=bottle.target)return bottleDone(true);
+  phase='bottle';$('bscene').style.display='flex';$('bottle').classList.add('big');updateBottle();
+}
+function hideBottle(){$('bscene').style.display='none';$('bottle').classList.remove('big')}
+function bottleDone(quick){
+  if(phase==='bottleFull')return;phase='bottleFull';
+  $('bscene').style.display='flex';$('bottle').classList.add('big');$('bsub').textContent='🎉 ขวดเต็มแล้ว! ไปรอบถัดไป';
+  burst();fanfare();speak('ขวดเต็มแล้ว');
+  setTimeout(()=>{bottle.count=Math.max(0,bottle.count-bottle.target);hideBottle();updateBottle();$('bsub').innerHTML='กดใจในไลฟ์ให้ครบ <b id="btarget">'+bottle.target.toLocaleString()+'</b> เพื่อไปรอบถัดไป';next()},quick?2200:2800);
+}
+$('bskip').onclick=()=>{if(phase!=='bottle')return;bottleDone(false)};
+function updateBottle(){
+  const b=$('bottle');b.style.display=bottleOn&&started?'block':'none';
+  const c=Math.min(bottle.count,bottle.target),t=bottle.target;
+  b.style.setProperty('--fill',(t?c/t*100:0)+'%');
+  $('bmini').textContent=c.toLocaleString()+'/'+t.toLocaleString();$('bnum').textContent=c.toLocaleString()+' / '+t.toLocaleString();
+  if($('btarget'))$('btarget').textContent=t.toLocaleString();
+}
+function addLiker(it){ // โปรไฟล์คนกดใจจะลอยลงมากองในขวด
+  const key=it.id||it.user;if(!key||bottle.map.has(key))return;
+  const SLOTS=35,n=bottle.slot++%SLOTS;
+  for(const [k,v] of bottle.map)if(v.n===n){v.el.remove();bottle.map.delete(k);break}
+  const e=document.createElement('span');e.className='bav';
+  e.style.cssText=`--x:${(3+(n%5)*19+Math.random()*3).toFixed(1)}%;--y:${(3+Math.floor(n/5)*12.4).toFixed(1)}%`;
+  e.innerHTML=`<b>${esc(String(it.user||'?').trim().charAt(0).toUpperCase())}</b>${it.avatar?`<img src="${esc(it.avatar)}" referrerpolicy="no-referrer" onerror="this.remove()">`:''}`;
+  $('bpile').appendChild(e);bottle.map.set(key,{n,el:e});
+}
+function onLikes(items){
+  if(!bottleOn||!started||phase==='results')return;
+  for(const it of items){bottle.count+=Math.max(1,Math.min(+it.count||1,100));addLiker(it)}
+  updateBottle();
+  if(phase==='bottle'&&bottle.count>=bottle.target)bottleDone(false);
+}
+
+// ---------- สรุปผลแบบลุ้นๆ ----------
+let skipRes=false,drumT=null;
+const rsleep=ms=>new Promise(r=>{const t0=Date.now(),iv=setInterval(()=>{if(skipRes||Date.now()-t0>=ms){clearInterval(iv);r()}},40)});
+const drum=on=>{clearInterval(drumT);if(on)drumT=setInterval(()=>{if(!skipRes)sfx(80+Math.random()*50,.07,'triangle',.1)},80)};
+function countUp(el,to){const t0=performance.now();(function f(){const k=Math.min(1,(performance.now()-t0)/900);el.textContent=Math.round(to*k);if(k<1)requestAnimationFrame(f)})()}
+async function showResults(){
+  phase='results';clearTimeout(nextTimer);clearInterval(tick);clearInterval(lyTick);clearLyric();hideBottle();
+  paused=false;$('pauseOv').style.display='none';try{player.pauseVideo()}catch(e){}
+  skipRes=false;$('results').style.display='flex';$('rStats').style.display='none';$('rBtns').style.display='none';$('rSkip').style.display='block';
+  const ranked=Object.values(players).sort((a,b)=>b.pts-a.pts),top=ranked.slice(0,5);
+  $('rSkip').onclick=()=>{skipRes=true};
+  if(!top.length){$('rSus').textContent='ไม่มีผู้ตอบถูกเลย 😅';$('rList').innerHTML='';$('rSkip').style.display='none';$('rBtns').style.display='flex';return}
+  $('rList').innerHTML=top.map((p,i)=>`<div class="rrow hid" id="rr${i}"><span class="rk0">${i+1}</span><span class="av" style="--s:44px"><b>?</b></span><span class="nm0">???</span><span class="pt">???</span></div>`).join('');
+  $('rSus').textContent='กำลังประกาศผล…';drum(true);await rsleep(2400);
+  for(let i=top.length-1;i>=0;i--){
+    if(i<=1){drum(true);const lead=i===0?'แชมป์คือ… ':'อันดับ 2 คือ… ';
+      for(const n of (i===0?[5,4,3,2,1]:[3,2,1])){if(skipRes)break;$('rSus').textContent=lead+n;sfx(300+n*50,.14,'square',.06);await rsleep(i===0?950:750)}}
+    drum(false);
+    const p=top[i],row=$('rr'+i);
+    row.classList.remove('hid');row.classList.add('show');if(i===0)row.classList.add('champ');
+    row.innerHTML=`<span class="rk0">${['🥇','🥈','🥉','4','5'][i]}</span>${av(p,i===0?56:44)}<span class="nm0">${esc(p.name)}${p.shared?' 🔗':''}</span><span class="pt">0</span>`;
+    countUp(row.querySelector('.pt'),p.pts);
+    $('rSus').textContent=i===0?'🏆 แชมป์ประจำเกม!':'';
+    if(!skipRes){if(i===0){fanfare();burst();setTimeout(burst,600);speak('แชมป์คือ '+p.name)}else sfx(660,.25,'triangle',.09)}
+    await rsleep(i===0?1600:i===1?1300:800);
+  }
+  drum(false);
+  const most=ranked.slice().sort((a,b)=>(b.correct||0)-(a.correct||0))[0],L=[];
+  if(stats.fast)L.push(`⚡ ตอบเร็วที่สุด: <b>${esc(stats.fast.name)}</b> (${stats.fast.time.toFixed(1)} วิ)`);
+  if(most&&most.correct)L.push(`🎯 ตอบถูกมากที่สุด: <b>${esc(most.name)}</b> (${most.correct} ข้อ)`);
+  L.push(`👥 ผู้เล่น ${ranked.length} คน • ตอบถูกรวม ${stats.correct} ครั้ง • ${rnd} รอบ`);
+  $('rSus').textContent='🎉 ขอบคุณทุกคนที่ร่วมสนุก!';$('rStats').innerHTML=L.join('<br>');$('rStats').style.display='block';
+  $('rSkip').style.display='none';$('rBtns').style.display='flex';
+}
+$('rAgain').onclick=()=>{players={};stats={fast:null,correct:0};rnd=0;$('rnd').textContent=0;finishFlag=false;order=shuffle([...lib.keys()]);idx=-1;winners=[];drawBoard();$('results').style.display='none';next()};
+$('rClose').onclick=()=>{$('results').style.display='none'};
+$('fin').onclick=()=>{
+  if(!started||phase==='results')return;finishFlag=true;
+  if(phase==='reveal'){clearTimeout(nextTimer);afterReveal()}
+  else if(phase==='bottle'||phase==='bottleFull'){showResults()}
+  else toast('จบเกมหลังรอบนี้ → สรุปผล');
+};
+
+// ---------- เอฟเฟกต์ตามจังหวะ (BPM ที่ตั้งไว้ในหน้าจัดการ) ----------
+function onBeat(i,bpm){
+  if(REDUCED)return;
+  if(bpm<170||i%2===0){const f=$('flash');f.classList.remove('k');void f.offsetWidth;f.classList.add('k')}
+  [...$('eq').children].forEach(b=>{b.style.height=(4+Math.random()*18)+'px'});
+  if(i%4===0){const r=document.createElement('i');r.className='ripple';$('deck').appendChild(r);setTimeout(()=>r.remove(),850)}
+}
+setInterval(()=>{
+  if(!active||paused||!cur||REDUCED){document.body.style.setProperty('--b',0);return}
+  const s=cur.song,bpm=s.bpm||120;let pos;
+  if(s.bpm){try{pos=player.getCurrentTime()-(s.beat0||0)}catch(e){return}}else pos=(performance.now()-tStart)/1000;
+  const beats=pos*bpm/60,bi=Math.floor(beats),ph=beats-bi;
+  document.body.style.setProperty('--b',Math.exp(-ph*5).toFixed(3));
+  if(bi!==lastBeat){lastBeat=bi;onBeat(bi,bpm)}
+},40);
 window.addEventListener('unhandledrejection',e=>console.error(e.reason));
 </script>
 </body>
