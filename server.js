@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 const { TikTokLiveConnection, WebcastEvent } = require('tiktok-live-connector');
 
@@ -12,6 +13,15 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin', (_, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/healthz', (_, res) => res.send('ok'));
+app.get('/api/cover/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  if (!/^[\w-]{11}$/.test(id)) return res.status(400).end();
+  try {
+    const r = await fetch('https://i.ytimg.com/vi/' + id + '/hqdefault.jpg', { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return res.status(404).end();
+    res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }).send(Buffer.from(await r.arrayBuffer()));
+  } catch (_) { res.status(502).end(); }
+});
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 2 * 1024 * 1024 });
 const send = (ws, o) => { if (ws && ws.readyState === 1) { try { ws.send(JSON.stringify(o)); } catch (_) {} } };
@@ -22,16 +32,18 @@ let lib = { rev: 0, songs: [] };
 try { const j = JSON.parse(fs.readFileSync(FILE, 'utf8')); if (j && Array.isArray(j.songs)) lib = j; } catch (_) {}
 const persist = () => { const t = FILE + '.tmp'; fs.writeFile(t, JSON.stringify(lib), (e) => { if (!e) fs.rename(t, FILE, () => {}); }); };
 const VID = /^[\w-]{11}$/;
+const AMID = /^\d{4,20}$/;
+function okArt(a) { try { const u = new URL(String(a || '')); return u.protocol === 'https:' && /\.mzstatic\.com$/.test(u.hostname) ? u.href.slice(0, 400) : ''; } catch (_) { return ''; } }
 function cleanSongs(arr) {
   if (!Array.isArray(arr)) return null;
   return arr.slice(0, 500).map((s) => {
     if (!s || typeof s !== 'object') return null;
-    const yt = String(s.yt || ''), title = String(s.title || '').trim().slice(0, 120);
-    if (!VID.test(yt) || !title) return null;
+    const yt = String(s.yt || ''), am = String(s.am || ''), title = String(s.title || '').trim().slice(0, 120);
+    if (!(VID.test(yt) || AMID.test(am)) || !title) return null;
     const bpm = Number(s.bpm), b0 = Number(s.beat0);
     const st = s.start === null || s.start === undefined || s.start === '' ? null : Number(s.start);
     return {
-      id: String(s.id || yt).slice(0, 24), title, yt,
+      id: String(s.id || yt || am).slice(0, 24), title, yt: VID.test(yt) ? yt : '', am: AMID.test(am) ? am : '', art: okArt(s.art),
       artist: String(s.artist || '').trim().slice(0, 80),
       start: Number.isFinite(st) ? Math.max(0, Math.min(7200, st)) : null,
       hint: String(s.hint || '').slice(0, 600),
@@ -111,6 +123,67 @@ app.get('/api/lyrics', async (req, res) => {
   }
   res.json(out);
 });
+
+// ---------- Apple Music (ไม่บังคับ: ต้องตั้งค่าตัวแปร APPLE_TEAM_ID / APPLE_KEY_ID / APPLE_PRIVATE_KEY) ----------
+const AP = { team: process.env.APPLE_TEAM_ID || '', key: process.env.APPLE_KEY_ID || '', pem: (process.env.APPLE_PRIVATE_KEY || '').replace(/\\n/g, '\n') };
+const appleOn = () => !!(AP.team && AP.key && AP.pem);
+let apTok = null;
+function appleToken() {
+  const now = Math.floor(Date.now() / 1000);
+  if (apTok && apTok.exp - 600 > now) return apTok.t;
+  const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const head = b({ alg: 'ES256', kid: AP.key }), exp = now + 12 * 3600, body = b({ iss: AP.team, iat: now, exp });
+  const sig = crypto.sign('sha256', Buffer.from(head + '.' + body), { key: AP.pem, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  apTok = { t: head + '.' + body + '.' + sig, exp };
+  return apTok.t;
+}
+app.get('/api/apple/token', (req, res) => {
+  if (!appleOn()) return res.status(404).json({ error: 'not configured' });
+  try { res.json({ token: appleToken() }); } catch (_) { res.status(500).json({ error: 'bad key' }); }
+});
+app.get('/api/img', async (req, res) => { // พร็อกซีรูปปก Apple Music (ให้อ่านสีจากปกได้)
+  let u; try { u = new URL(String(req.query.u || '')); } catch (_) { return res.status(400).end(); }
+  if (u.protocol !== 'https:' || !/\.mzstatic\.com$/.test(u.hostname)) return res.status(400).end();
+  try {
+    const r = await fetch(u, { signal: AbortSignal.timeout(6000) }), ct = r.headers.get('content-type') || '';
+    if (!r.ok || !ct.startsWith('image/')) return res.status(404).end();
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 3e6) return res.status(413).end();
+    res.set({ 'Content-Type': ct, 'Cache-Control': 'public, max-age=86400' }).send(buf);
+  } catch (_) { res.status(502).end(); }
+});
+function parseApple(link) {
+  let u; try { u = new URL(link); } catch (_) { return null; }
+  if (!/(^|\.)music\.apple\.com$/.test(u.hostname)) return null;
+  const parts = u.pathname.split('/').filter(Boolean), sf = /^[a-z]{2}$/i.test(parts[0] || '') ? parts[0].toLowerCase() : 'th';
+  const i = u.searchParams.get('i'), last = parts[parts.length - 1] || '';
+  if (i && /^\d+$/.test(i)) return { kind: 'song', id: i, sf };
+  if (parts.includes('song') && /^\d+$/.test(last)) return { kind: 'song', id: last, sf };
+  if (parts.includes('playlist') && /^pl\.[\w-]+$/.test(last)) return { kind: 'playlist', id: last, sf };
+  if (parts.includes('album') && /^\d+$/.test(last)) return { kind: 'album', id: last, sf };
+  return null;
+}
+async function appleGet(pathq) {
+  const r = await fetch('https://api.music.apple.com' + pathq, { headers: { Authorization: 'Bearer ' + appleToken() }, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error('Apple Music ตอบกลับ ' + r.status);
+  return r.json();
+}
+function toItem(d) {
+  const a = (d && d.attributes) || {}, art = a.artwork && a.artwork.url ? String(a.artwork.url).replace('{w}', '600').replace('{h}', '600') : '';
+  return { am: String(d.id), title: String(a.name || ''), artist: String(a.artistName || ''), art };
+}
+async function appleItems(link) {
+  const p = parseApple(link);
+  if (!p) throw new Error('ลิงก์ Apple Music ไม่ถูกต้อง (ใช้ลิงก์เพลง อัลบั้ม หรือเพลย์ลิสต์จาก music.apple.com)');
+  if (p.kind === 'song') return ((await appleGet('/v1/catalog/' + p.sf + '/songs/' + p.id)).data || []).map(toItem);
+  let out = [], next = '/v1/catalog/' + p.sf + '/' + (p.kind === 'playlist' ? 'playlists' : 'albums') + '/' + p.id + '/tracks?limit=100';
+  while (next && out.length < 300) {
+    const j = await appleGet(next);
+    out = out.concat((j.data || []).filter((d) => d.type === 'songs').map(toItem));
+    next = j.next && String(j.next).startsWith('/') ? j.next : null;
+  }
+  return out.slice(0, 300);
+}
 
 // ---------- TikTok Live (ต่อใหม่อัตโนมัติ) ----------
 const rooms = new Map();
@@ -199,7 +272,7 @@ function host(ws, d) {
   }
   clearTimeout(s.timer);
   s.host = ws; ws.sess = s; ws.isHost = true;
-  send(ws, { type: 'session', code: s.code, lib });
+  send(ws, { type: 'session', code: s.code, lib, apple: appleOn() });
 }
 function admin(ws, code) {
   ws.tries = (ws.tries || 0) + 1;
@@ -207,7 +280,7 @@ function admin(ws, code) {
   const s = sessions.get(String(code || ''));
   if (!s) return send(ws, { type: 'adminError', text: 'ไม่พบรหัสนี้ — ต้องเปิดหน้าเกมค้างไว้ และดูรหัสจากหน้าจอเกม' });
   ws.sess = s; ws.isAdmin = true; s.admins.add(ws);
-  send(ws, { type: 'library', lib });
+  send(ws, { type: 'library', lib, apple: appleOn() });
 }
 
 wss.on('connection', (ws) => {
@@ -229,6 +302,14 @@ wss.on('connection', (ws) => {
           .catch(() => send(ws, { type: 'meta', rid: d.rid, items: [] }));
         break;
       }
+      case 'apple': { // แอดมินนำเข้าจากลิงก์ Apple Music
+        if (!ws.isAdmin) break;
+        if (!appleOn()) { send(ws, { type: 'appleItems', rid: d.rid, error: 'เซิร์ฟเวอร์ยังไม่ได้ตั้งค่า Apple Music' }); break; }
+        appleItems(String(d.link || '').slice(0, 300))
+          .then((items) => send(ws, { type: 'appleItems', rid: d.rid, items }))
+          .catch((e) => send(ws, { type: 'appleItems', rid: d.rid, error: String((e && e.message) || e) }));
+        break;
+      }
       case 'libSet': {
         if (!ws.isAdmin) break;
         const c = cleanSongs(d.songs); if (!c) break;
@@ -236,7 +317,7 @@ wss.on('connection', (ws) => {
         send(ws, { type: 'saved', count: c.length });
         for (const s of sessions.values()) {
           if (s.host) send(s.host, { type: 'library', lib });
-          s.admins.forEach((a) => { if (a !== ws) send(a, { type: 'library', lib }); });
+          s.admins.forEach((a) => { if (a !== ws) send(a, { type: 'library', lib, apple: appleOn() }); });
         }
         break;
       }
