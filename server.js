@@ -47,6 +47,7 @@ function cleanSongs(arr) {
       artist: String(s.artist || '').trim().slice(0, 80),
       start: Number.isFinite(st) ? Math.max(0, Math.min(7200, st)) : null,
       hint: String(s.hint || '').slice(0, 600),
+      info: String(s.info || '').slice(0, 200),
       auto: s.auto !== false,
       bpm: Number.isFinite(bpm) && bpm >= 40 && bpm <= 240 ? bpm : null,
       beat0: Number.isFinite(b0) ? Math.max(0, Math.min(600, b0)) : 0,
@@ -170,7 +171,10 @@ async function appleGet(pathq) {
 }
 function toItem(d) {
   const a = (d && d.attributes) || {}, art = a.artwork && a.artwork.url ? String(a.artwork.url).replace('{w}', '600').replace('{h}', '600') : '';
-  return { am: String(d.id), title: String(a.name || ''), artist: String(a.artistName || ''), art };
+  return {
+    am: String(d.id), title: String(a.name || ''), artist: String(a.artistName || ''), art,
+    info: [a.albumName, String(a.releaseDate || '').slice(0, 4), (a.genreNames || []).find((g) => g !== 'Music')].filter(Boolean).join(' · ') + (a.recordLabel ? '\n℗ ' + a.recordLabel : ''),
+  };
 }
 async function appleItems(link) {
   const p = parseApple(link);
@@ -212,6 +216,12 @@ function connectRoom(room) {
   conn.on(WebcastEvent.LIKE, (d) => {
     const i = info(d), k = i.id || i.user, e = room.likes.get(k) || { ...i, count: 0 };
     e.count += Math.max(1, Math.min(Number(d.count) || 1, 100)); room.likes.set(k, e);
+  });
+  conn.on(WebcastEvent.FOLLOW, (d) => bcast(room, { type: 'follow', ...info(d) }));
+  conn.on(WebcastEvent.GIFT, (d) => {
+    const g = d.gift || {}, streaking = g.type === 1 && !d.repeatEnd;
+    const cnt = Math.max(1, Number(d.repeatCount) || Number(d.comboCount) || 1);
+    bcast(room, { type: 'gift', ...info(d), name: String(g.name || ''), diamonds: (Number(g.diamondCount) || 0) * cnt, streaking });
   });
   conn.on(WebcastEvent.SHARE, (d) => bcast(room, { type: 'share', ...info(d) }));
   conn.on(WebcastEvent.SOCIAL, (d) => { if (/share/i.test(JSON.stringify(d.displayType || d.label || ''))) bcast(room, { type: 'share', ...info(d) }); });
