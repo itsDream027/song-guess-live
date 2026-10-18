@@ -129,6 +129,65 @@ body.fs #test{display:none}
 .rrow.champ::before{content:"👑";position:absolute;top:-20px;left:14px;font-size:28px}
 #rStats{display:none;font-size:15px;color:var(--mute);line-height:1.7}#rStats b{color:var(--ink)}
 .row2{display:none;gap:10px;justify-content:center}
+/* ===== ดีไซน์หน้าเกมใหม่ ===== */
+#game{gap:10px;padding:10px 12px 160px}
+.topbar{display:flex;gap:8px;width:100%;align-items:center}
+.goal{position:relative;flex:1;height:38px;border-radius:99px;background:#101a4acc;border:2px solid #7fc9ff88;overflow:hidden;display:flex;align-items:center;gap:6px;padding:0 12px 0 8px;font-size:13px;font-weight:700;box-shadow:0 0 14px #3aa0ff55}
+.gfill{position:absolute;inset:0 auto 0 0;width:var(--g,0%);background:linear-gradient(90deg,#2d8cff,#5fd0ff);z-index:0;transition:width .6s}
+.goal>*:not(.gfill){position:relative;z-index:1}.goal .gl{flex:1;white-space:nowrap}.goal b{font:600 15px Mitr}.gnum{font-size:12px;opacity:.9}
+.rndp{padding:7px 14px;border-radius:99px;background:#101a4acc;border:2px solid #ffffff33;font-size:13px;white-space:nowrap}.rndp b{font:600 16px Mitr}
+.lb{display:grid;grid-template-columns:1.15fr .85fr;gap:6px;width:100%}
+.lcol{display:flex;flex-direction:column;gap:5px;min-width:0}
+.lrow{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;height:34px;border-radius:99px;background:linear-gradient(90deg,#1a1450d9,#2a2070b0);border:1px solid #ffffff22;backdrop-filter:blur(4px);min-width:0}
+.lrow .rn{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:600 11px Mitr;background:#8a8fbf;color:#12103a;flex:none}
+.lrow.r0 .rn{background:linear-gradient(#ffe27a,#e0a526)}.lrow.r1 .rn{background:linear-gradient(#f4f6ff,#a9afd0)}.lrow.r2 .rn{background:linear-gradient(#f0b27a,#b4682f)}
+.lrow .av{border-width:1.5px}
+.lrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+.lrow .ic{font-size:11px;white-space:nowrap;color:#ffb36b}.lrow .sc{font:600 15px Mitr;color:#7fe6ff}.lrow.r0 .sc{color:#ffd23f}.lrow.empty{opacity:.35}
+.stage{flex-direction:column;align-items:center;position:relative;width:100%}
+.deck{width:min(340px,84vw);margin:6px 0}
+.ring{inset:-4%;width:108%;height:108%}
+#spec{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity .4s}
+.deck.reveal #spec{opacity:0}
+.disc{inset:14%}
+.label{inset:30%;background:radial-gradient(circle at 35% 30%,#7ad7ff,#1b69d6 70%)!important;filter:none!important;border:3px solid #0b1f4d;display:grid;place-items:center}
+.label::after{display:none}
+#timer{font:700 clamp(30px,10vw,50px) Mitr;color:#fff;text-shadow:0 2px 10px #0b2a6e}
+.deck.reveal .disc{transform:translateX(30%) scale(.92)}
+.sleeve{left:2%;top:7%;width:74%}
+#slots{gap:8px 7px;max-width:100%}
+.slot{width:var(--tw,44px);height:calc(var(--tw,44px)*1.4);min-width:0;padding:0;border-radius:calc(var(--tw,44px)*.28);background:linear-gradient(#ffffff2e,#ffffff0d);border:1px solid #ffffff33;position:relative;font:700 calc(var(--tw,44px)*.6)/calc(var(--tw,44px)*1.4) Mitr;color:#12103a;box-shadow:0 4px 12px #0004}
+.slot::after{content:"";position:absolute;left:22%;right:22%;bottom:18%;height:3px;border-radius:2px;background:#4fd8ff;box-shadow:0 0 8px #4fd8ff}
+.slot.on{background:#fff;border-color:#fff;color:#12103a;box-shadow:0 6px 16px #0006}.slot.on::after{display:none}
+.slot.gap{background:none;border:0;box-shadow:none;width:calc(var(--tw,44px)*.4)}.slot.gap::after{display:none}
+.pill2{padding:8px 18px;border-radius:99px;background:#ffffff22;border:1px solid #ffffff33;font-weight:700;font-size:15px;backdrop-filter:blur(6px)}
+#game[data-st=correct] .pill2,#game[data-st=reveal] .pill2{display:none}
+#winCard{display:none;flex-direction:column;align-items:center;gap:6px;width:100%}
+#game[data-st=correct] #winCard{display:flex}#game[data-st=correct] .deck{display:none}
+#reveal{display:none;flex-direction:column;align-items:center;gap:4px;text-align:center;margin-top:10px;max-width:100%}
+#game[data-st=reveal] #reveal{display:flex}
+#game:not([data-st=reveal]) #winner{display:none}
+.wtitle{font:700 34px Mitr;color:#ffd96b;text-shadow:0 0 22px #ffb12e99,0 3px 0 #a8650e}
+.crown{font-size:44px;margin-bottom:-26px;z-index:2;filter:drop-shadow(0 4px 8px #0006)}
+.wav{width:150px;height:150px;border-radius:50%;padding:6px;background:conic-gradient(#ff2e88,#ffd23f,#27e3ff,#8a5bff,#ff2e88);box-shadow:0 0 50px #ffb12e77;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.wav .av{border:0}
+.ribbon{position:relative;margin-top:-18px;min-width:220px;max-width:92%;padding:8px 36px;background:linear-gradient(#8b5cff,#5a2fd6);border:2px solid #cdbdff;border-radius:10px;font:700 24px Mitr;text-align:center;box-shadow:0 8px 20px #0006}
+.ribbon span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wscore{display:flex;align-items:baseline;gap:10px;font-family:Mitr}.wscore small{font-size:13px;color:#ffffffc0}.wscore b{font-size:34px}
+.wscore em{font-style:normal;font-size:46px;font-weight:700;background:linear-gradient(#fff3b0,#ffc83d);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px #ffb12e99)}
+.wpills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.wpills span{padding:5px 12px;border-radius:99px;font-size:13px;font-weight:700}
+.pk{background:linear-gradient(#ff8a3d,#e0501a)}.pt2{background:#0007;border:1px solid #ffffff33}
+.bub{display:flex;gap:8px;align-items:center;background:#fff;color:#1a1438;border-radius:18px 18px 18px 4px;padding:6px 12px;max-width:92%;align-self:flex-start;margin-left:6px;text-align:left}
+.bub .av{border-width:1.5px}.bub b{font-size:13px;color:#7a3fd0}#wcBubGain{color:#1c9d6a;font-size:12px;font-weight:700}#wcBubText{font-size:16px;font-weight:700}
+.rtitle{font:700 clamp(28px,9vw,40px)/1.15 Mitr;text-shadow:0 3px 16px #000a}.rartist{font:600 20px Mitr;letter-spacing:.5px}
+.rinfo{font-size:13px;color:#ffffffb8;line-height:1.5}.rnext{margin-top:10px;padding:7px 20px;border-radius:99px;background:#0006;border:1px solid #ffffff33;font-weight:700;font-size:15px}
+#test{flex-wrap:wrap}#fsBtn{position:static;width:auto;height:auto;border-radius:14px;padding:12px 18px;font-size:16px;backdrop-filter:none}
+#piggy{display:none;position:fixed;right:10px;bottom:10px;width:150px;z-index:7;text-align:center;pointer-events:none}
+#pigsvg{width:130px;filter:drop-shadow(0 6px 10px #0006)}
+.pgift{position:absolute;left:-16px;bottom:40px;font-size:34px;animation:bob 2s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-5px)}}
+.plv{position:relative;height:22px;border-radius:99px;background:#ffffffee;overflow:hidden;margin:0 auto;width:150px}
+.plv i{position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:linear-gradient(#ffb0d6,#ff6fb0);transition:width .5s}
+.plv span{position:relative;font:700 12px Mitr;color:#5a1840;line-height:22px}.pcap{font-size:11px;margin-top:3px;text-shadow:0 1px 4px #000}
 </style>
 </head>
 <body>
@@ -144,25 +203,53 @@ body.fs #test{display:none}
   <select id="rounds"><option value="5">5 รอบ</option><option value="10" selected>10 รอบ</option><option value="15">15 รอบ</option><option value="20">20 รอบ</option><option value="0">ไม่จำกัด (กดจบเกมเอง)</option></select>
   <small>ขวดแก้ว: ต้องกดใจในไลฟ์ให้ครบก่อนเริ่มรอบถัดไป (ต้องใส่ชื่อ TikTok)</small>
   <select id="btgt"><option value="1000" selected>1,000 ใจ</option><option value="500">500 ใจ</option><option value="300">300 ใจ</option><option value="100">100 ใจ</option><option value="0">ปิดขวด</option></select>
+  <small>เป้าผู้ติดตาม (นับคนกดติดตามระหว่างเกม)</small>
+  <select id="goalSel"><option value="100" selected>100 คน</option><option value="50">50 คน</option><option value="200">200 คน</option><option value="500">500 คน</option><option value="0">ปิดแถบเป้า</option></select>
   <small>ตอบเร็วได้ 10–30 คะแนน • ได้คะแนนสูงสุด 3 คนต่อรอบ • เพลงทั้งหมดเพิ่มเองที่หน้าจัดการเพลง</small>
   <button id="go">เชื่อมต่อ</button>
 </div>
 
-<div id="game">
-  <div class="top"><div class="pill">รอบที่ <span id="rnd">0</span></div><div class="eq" id="eq"><i></i><i></i><i></i><i></i><i></i></div><div class="pill" id="timer">⏱ 10</div></div>
-  <div id="board" class="rank"></div>
-  <div class="stage"><div class="deck" id="deck">
-    <svg class="ring" viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="48"/><circle id="prog" class="prg" cx="50" cy="50" r="48"/></svg>
-    <div class="disc"><div class="vinyl" id="vinyl"><div class="label" id="label"></div></div></div>
-    <div class="sleeve" id="sleeve"></div>
-    <div class="arm" id="arm"></div>
-  </div></div>
-  <div id="slots"></div>
-  <div id="artist"></div>
+<div id="game" data-st="play">
+  <div class="topbar">
+    <div class="goal" id="goal"><span class="gi">👤＋</span><span class="gl">เป้าผู้ติดตาม</span><b id="gpct">0%</b><i class="gfill"></i><span class="gnum" id="gnum">0 / 100</span></div>
+    <div class="rndp">เพลงที่ <b><span id="rnd">0</span>/<span id="rndTotal">10</span></b></div>
+  </div>
+  <div id="board" class="lb"></div>
   <div id="winner"></div>
-  <div id="test"><button id="pause" class="ghost">⏸ หยุด</button><button id="skip" class="ghost">⏭ ข้าม</button><button id="fin" class="ghost">🏁 จบเกม</button><button id="pip" class="ghost">🗗 PiP</button></div>
+  <div class="stage">
+    <div class="deck" id="deck">
+      <svg class="ring" viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="48"/><circle id="prog" class="prg" cx="50" cy="50" r="48"/></svg>
+      <canvas id="spec" width="480" height="480"></canvas>
+      <div class="disc"><div class="vinyl" id="vinyl"><div class="label" id="label"><span id="timer">10</span></div></div></div>
+      <div class="sleeve" id="sleeve"></div>
+      <div class="arm" id="arm"></div>
+    </div>
+    <div id="winCard">
+      <div class="wtitle">ถูกต้อง!</div><div class="crown">👑</div>
+      <div class="wav" id="wcAv"></div>
+      <div class="ribbon"><span id="wcName"></span></div>
+      <div class="wscore"><small>คะแนนรวม</small><b id="wcTotal">0</b><em id="wcGain">+0</em></div>
+      <div class="wpills"><span class="pk" id="wcStreak">🔥 ตอบถูกต่อเนื่อง 1 เพลง</span><span class="pt2" id="wcLeft">⏱ เหลือ 3 วิ</span></div>
+      <div class="bub"><span id="wcBubAv"></span><div><b id="wcBubName"></b><span id="wcBubGain"></span><div id="wcBubText"></div></div></div>
+    </div>
+    <div id="reveal"><div class="rtitle" id="rvTitle"></div><div class="rartist" id="rvArtist"></div><div class="rinfo" id="rvInfo"></div><div class="rnext" id="rvNext"></div></div>
+  </div>
+  <div id="slots"></div>
+  <div class="pill2" id="hintPill">💬 พิมพ์ชื่อเพลงในแชทเลย!</div>
+  <div id="artist"></div>
+  <div id="eq" hidden><i></i><i></i><i></i><i></i><i></i></div>
+  <div id="test"><button id="pause" class="ghost">⏸ หยุด</button><button id="skip" class="ghost">⏭ ข้าม</button><button id="fin" class="ghost">🏁 จบเกม</button><button id="pip" class="ghost">🗗 PiP</button><button id="fsBtn" class="ghost" title="เต็มจอ">⛶</button></div>
 </div>
-<button id="fsBtn" title="เต็มจอ">⛶</button>
+<div id="piggy"><div class="pgift">🎁</div>
+  <svg id="pigsvg" viewBox="0 0 120 100"><defs><clipPath id="pgc"><rect id="pgfill" x="0" y="86" width="120" height="4"/></clipPath><linearGradient id="pgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe3f1"/><stop offset="1" stop-color="#ff9fcd"/></linearGradient></defs>
+    <path d="M44 40C30 18 12 20 8 34C22 32 30 38 44 50Z" fill="#fff" opacity=".92"/><path d="M76 40C90 18 108 20 112 34C98 32 90 38 76 50Z" fill="#fff" opacity=".92"/>
+    <rect x="32" y="78" width="13" height="14" rx="5" fill="#ff7ab8"/><rect x="74" y="78" width="13" height="14" rx="5" fill="#ff7ab8"/>
+    <ellipse cx="60" cy="58" rx="38" ry="28" fill="url(#pgl)" fill-opacity=".55" stroke="#ffffffcc" stroke-width="2"/>
+    <g clip-path="url(#pgc)"><ellipse cx="60" cy="58" rx="36" ry="26" fill="#ffc83d"/><circle cx="40" cy="70" r="7" fill="#ffe07a"/><circle cx="58" cy="74" r="7" fill="#ffd34a"/><circle cx="76" cy="70" r="7" fill="#ffe07a"/><circle cx="50" cy="60" r="6" fill="#ffd34a"/><circle cx="68" cy="60" r="6" fill="#ffe07a"/></g>
+    <path d="M82 34L91 23L97 40Z" fill="#ff7ab8"/><ellipse cx="97" cy="60" rx="9" ry="7" fill="#ff9ccb"/><circle cx="94" cy="60" r="1.6" fill="#7a2b58"/><circle cx="100" cy="60" r="1.6" fill="#7a2b58"/>
+    <circle cx="84" cy="48" r="2.6" fill="#3a1b3a"/><rect x="50" y="31" width="20" height="4" rx="2" fill="#7a2b58"/><path d="M23 58q-9-6-3-15" stroke="#ff7ab8" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M36 46q8-10 22-10" stroke="#fff" stroke-opacity=".7" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+  <div class="plv" id="plv"><i></i><span id="plvtxt">Lv.1  0/100</span></div><div class="pcap">ส่งของขวัญหยอดน้องหมูออมสิน</div></div>
 <div id="lyricLayer"></div>
 <div id="bscene"><h1>🫙 ขวดแก้ว</h1><div id="bsub">กดใจในไลฟ์ให้ครบ <b id="btarget">1,000</b> เพื่อไปรอบถัดไป</div><div id="bnum">0 / 1,000</div><div style="flex:1"></div><button id="bskip" class="ghost">⏭ ข้ามขวด</button></div>
 <div id="bottle"><div class="neck"></div><div class="cork"></div><div class="bbody"><div class="liquid"></div><div id="bpile"></div></div><div id="bmini"></div></div>
@@ -197,6 +284,7 @@ try{lib=JSON.parse(localStorage.getItem('lib2')||'[]')}catch(e){}
 let phase='idle',finishFlag=false,totalRounds=10,bottleOn=false,bottle={count:0,target:1000,slot:0,map:new Map()},stats={fast:null,correct:0},lastBeat=-1,lyTick=null,lineKey=-1;
 const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mkit=null,amOK=false,amFail=false;
+let graceTick=null,goal={count:0,target:0,step:0},piggy={lv:1,cur:0,need:100},bEnv=0;
 
 // ---------- ตกแต่ง ----------
 (()=>{const b=$('bg');for(let i=0;i<16;i++){const e=document.createElement('i');e.textContent=['♪','♫','♬','🎵'][i%4];e.style.cssText=`left:${Math.random()*100}%;font-size:${16+Math.random()*28}px;animation-duration:${10+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;b.appendChild(e)}})();
@@ -206,7 +294,8 @@ function toast(t,ms=2800){const e=$('toast');e.textContent=t;e.classList.add('sh
 // ---------- เชื่อมต่อ ----------
 $('go').onclick=()=>{
   DUR=+$('dur').value;totalRounds=+$('rounds').value;bottle.target=+$('btgt').value;bottleOn=bottle.target>0&&!!$('ws').value.trim();
-  $('setup').style.display='none';$('game').style.display='flex';$('timer').textContent='⏱ '+DUR;drawBoard();
+  goal.target=goal.step=+$('goalSel').value;$('goal').style.display=goal.target?'flex':'none';updateGoal();$('rndTotal').textContent=totalRounds||'∞';
+  $('setup').style.display='none';$('game').style.display='flex';$('timer').textContent=''+DUR;drawBoard();
   $('tap').style.display='flex';$('adminUrl').textContent=location.host+'/admin';
   $('stTk').textContent=$('ws').value.trim()?'⏳ กำลังเชื่อมต่อ TikTok…':'⚠️ ไม่ได้ใส่ชื่อ TikTok (จะไม่รับคอมเมนต์)';
   const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.onerror=()=>{$('stYt').textContent='❌ โหลด YouTube ไม่ได้ (เช็กอินเทอร์เน็ต)'};document.head.appendChild(s);
@@ -245,14 +334,16 @@ function connectWS(){
       case 'status':$('stTk').textContent=d.text;toast(d.text,6000);break;
       case 'chat':onComment(d.user||'?',d.comment||'',d.avatar,d.id);break;
       case 'share':onShare(d);break;
-      case 'likes':onLikes(d.items||[]);break}};
+      case 'likes':onLikes(d.items||[]);break;
+      case 'follow':onFollow(d);break;
+      case 'gift':onGift(d);break}};
   w.onclose=()=>{if(sock===w){setTimeout(connectWS,backoff);backoff=Math.min(15000,backoff*2)}};
   w.onerror=()=>{try{w.close()}catch(e){}};
 }
 setInterval(()=>{if(sock&&sock.readyState===1){wsSend({type:'ping'});if(Date.now()-lastMsg>50000){try{sock.close()}catch(e){}}}},20000);
 
 // ---------- เริ่ม / รอบเกม ----------
-$('tapb').onclick=()=>{started=true;unlockAudio();updateBottle();$('tap').style.display='none';try{player.unMute();player.setVolume(100)}catch(e){}lockScreen();next()};
+$('tapb').onclick=()=>{started=true;unlockAudio();updateBottle();$('piggy').style.display='block';updatePiggy();$('tap').style.display='none';try{player.unMute();player.setVolume(100)}catch(e){}lockScreen();next()};
 async function lockScreen(){try{if('wakeLock' in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&started)lockScreen()});
 const coverUrl=s=>s.art?'/api/img?u='+encodeURIComponent(s.art):'https://i.ytimg.com/vi/'+s.yt+'/hqdefault.jpg';
@@ -309,13 +400,13 @@ async function next(){
   clearTimeout(nextTimer);clearTimeout(graceTimer);clearInterval(tick);clearInterval(lyTick);nextPending=false;graceOn=false;active=false;winners=[];
   try{
     if(!lib.length){busy=false;$('winner').className='lose';$('winner').textContent='ยังไม่มีเพลง — เพิ่มที่หน้าจัดการเพลง';nextTimer=setTimeout(next,4000);return}
-    const song=pickSong();if(!song)throw new Error('no playable song');rnd++;$('rnd').textContent=rnd;phase='loading';
+    const song=pickSong();if(!song)throw new Error('no playable song');rnd++;$('rnd').textContent=rnd;phase='loading';setState('play');
     clearLyric();$('winner').textContent='';$('winner').className='';$('artist').textContent='';
     $('label').classList.remove('reveal');$('deck').classList.remove('reveal');
-    const p=$('prog');p.style.transition='none';p.style.strokeDashoffset=0;$('timer').textContent='⏱ '+DUR;
+    const p=$('prog');p.style.transition='none';p.style.strokeDashoffset=0;$('timer').textContent=''+DUR;
     cur={song,ans:song.title,alts:[...new Set([song.title,...(song.alts||[])].map(norm))].filter(x=>x.length>=2),hint:(song.hint||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,3)};
     {const cu=coverUrl(song),su=sameCover(song);$('label').style.backgroundImage=$('sleeve').style.backgroundImage=`url(${cu})`;setCover(su);coverPalette(su).then(q=>setPalette(q||[],song.yt||song.am))}
-    $('slots').innerHTML=chars(cur.ans).map(c=>c.trim()===''?'<div class="slot gap"></div>':'<div class="slot">&nbsp;</div>').join('');
+    $('slots').innerHTML=chars(cur.ans).map(c=>c.trim()===''?'<div class="slot gap"></div>':'<div class="slot">&nbsp;</div>').join('');fitTiles(chars(cur.ans).length);
     const lyP=(!cur.hint.length&&song.auto!==false)?fetchLyrics(song):Promise.resolve(null);let lyDone=false;lyP.then(()=>{lyDone=true});
     await loadSong(song);
     if(!lyDone){PL.pause()}
@@ -340,7 +431,7 @@ function startRound(){
   const p=$('prog');void p.getBoundingClientRect();p.style.transition=`stroke-dashoffset ${DUR}s linear`;p.style.strokeDashoffset=301.6;
   const L=[.8,.5,.2].map(f=>Math.round(DUR*f)),m1=Math.round(DUR*.7),m2=Math.round(DUR*.4),n=chars(cur.ans).length;
   tick=setInterval(()=>{if(paused)return;try{
-    t--;left=t;$('timer').textContent='⏱ '+t;
+    t--;left=t;$('timer').textContent=''+t;
     if(t===m1)reveal(Math.ceil(n*.15));
     if(t===m2){reveal(Math.ceil(n*.2));if(cur.song.artist)$('artist').textContent='🎤 '+cur.song.artist}
     const li=L.indexOf(t);
@@ -363,9 +454,12 @@ function end(){
   const els=[...$('slots').children],cs=chars(cur.ans);
   els.forEach((e,i)=>{if(cs[i].trim()){e.textContent=cs[i];e.classList.add('on')}});
   $('label').classList.add('reveal');$('deck').classList.add('reveal');clearLyric();
-  if(cur.song.artist)$('artist').textContent='🎤 '+cur.song.artist;
   $('winner').className=winners.length?'':'lose';
   $('winner').innerHTML=winners.length?winnersHTML():'⏰ หมดเวลา!';
+  clearInterval(graceTick);Object.values(players).forEach(p=>{if(!winners.some(w=>w.key===p.key))p.streak=0});drawBoard();
+  $('rvTitle').textContent=cur.ans;$('rvArtist').textContent=cur.song.artist||'';
+  $('rvInfo').innerHTML=(cur.song.info||'').split('\n').filter(Boolean).map(esc).join('<br>');
+  $('artist').textContent='';setState('reveal');
   nextPending=true;nextAt=performance.now();nextMs=6000;nextTimer=setTimeout(afterReveal,6000);
 }
 $('skip').onclick=()=>{if(!cur||paused||busy)return;if(active)end();else if(phase==='reveal'){clearTimeout(nextTimer);afterReveal()}};
@@ -396,7 +490,7 @@ async function fetchLyrics(song){
 
 // ---------- ตอบ / คะแนน ----------
 const av=(p,s)=>`<span class="av" style="--s:${s}px"><b>${esc((p.name||'?').trim().charAt(0).toUpperCase())}</b>${p.avatar?`<img src="${esc(p.avatar)}" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</span>`;
-function addPoints(key,name,avatar,n){const p=players[key]||(players[key]={name,avatar:'',pts:0,shared:false});if(avatar)p.avatar=avatar;p.pts+=n;return p}
+function addPoints(key,name,avatar,n){const p=players[key]||(players[key]={key,name,avatar:'',pts:0,shared:false,followed:false,streak:0});if(avatar)p.avatar=avatar;p.pts+=n;return p}
 function winnersHTML(){const med=['🥇','🥈','🥉'];
   return winners.map((w,i)=>`<div class="wrow">${med[i]}${av(w,40)}<span class="wn">${esc(w.name)}</span><span class="wt">⚡ ${w.time.toFixed(1)} วิ</span><b>+${w.gain}</b></div>`).join('')}
 function matches(text){
@@ -407,11 +501,11 @@ function onComment(user,text,avatar,id){
   const key=id||user;if(avatar&&players[key])players[key].avatar=avatar;
   if(paused||!active||!cur||winners.some(w=>w.key===key))return;
   if(!matches(text))return;
-  const time=(performance.now()-tStart)/1000,gain=10+Math.round(20*Math.max(0,1-time/DUR)),p=addPoints(key,user,avatar,gain);
+  const time=(performance.now()-tStart)/1000,st=((players[key]&&players[key].streak)||0)+1,gain=10+Math.round(20*Math.max(0,1-time/DUR))+Math.min(10,(st-1)*2),p=addPoints(key,user,avatar,gain);p.streak=st;
   p.correct=(p.correct||0)+1;stats.correct++;if(!stats.fast||time<stats.fast.time)stats.fast={name:user,time,song:cur.ans};
-  winners.push({key,name:user,avatar:p.avatar,gain,time});drawBoard();
-  $('winner').className='';$('winner').innerHTML=winnersHTML();
-  if(winners.length===1){speak(user+' ตอบถูก');burst();graceOn=true;graceAt=performance.now();graceMs=3000;graceTimer=setTimeout(()=>end(),3000)}
+  winners.push({key,name:user,avatar:p.avatar,gain,time,streak:st,total:p.pts});drawBoard();
+  $('winner').className='';$('winner').innerHTML=winnersHTML();if(winners.length===1)showWin(winners[0],text);
+  if(winners.length===1){speak(user+' ตอบถูก');burst();graceOn=true;graceAt=performance.now();graceMs=3000;graceTimer=setTimeout(()=>end(),3000);clearInterval(graceTick);graceTick=setInterval(()=>{if(paused)return;$('wcLeft').textContent='⏱ เหลือ '+Math.max(0,Math.ceil((graceMs-(performance.now()-graceAt))/1000))+' วิ'},250)}
   if(winners.length>=3)end();
 }
 function onShare(d){
@@ -420,10 +514,10 @@ function onShare(d){
   drawBoard();toast(`🔗 ${d.user} แชร์ไลฟ์ +20 คะแนน`);speak(d.user+' แชร์ไลฟ์');
 }
 function drawBoard(){
-  const list=Object.values(players).sort((a,b)=>b.pts-a.pts).slice(0,5);
-  $('board').innerHTML=[0,1,2,3,4].map(i=>{const p=list[i];
-    return p?`<div class="rk r${i}"><i>${i+1}</i>${av(p,36)}<span class="nm">${esc(p.name)}${p.shared?' 🔗':''}</span><b>${p.pts}</b></div>`
-            :`<div class="rk empty"><i>${i+1}</i><div class="ph"></div><span class="nm">—</span><b>0</b></div>`}).join('');
+  const list=Object.values(players).sort((a,b)=>b.pts-a.pts).slice(0,8);
+  const row=(p,i)=>p?`<div class="lrow r${i}"><span class="rn">${i+1}</span>${av(p,24)}<span class="nm">${esc(p.name)}</span><span class="ic">${p.shared?'➦ ':''}${p.followed?'👤＋ ':''}${p.streak>=2?'🔥×'+p.streak:''}</span><b class="sc">${p.pts}</b></div>`
+    :`<div class="lrow empty"><span class="rn">${i+1}</span><span class="ph" style="width:24px;height:24px"></span><span class="nm">—</span></div>`;
+  $('board').innerHTML=`<div class="lcol">${[0,1,2,3,4].map(i=>row(list[i],i)).join('')}</div><div class="lcol">${[5,6,7].filter(i=>list[i]).map(i=>row(list[i],i)).join('')}</div>`;
 }
 function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 
@@ -594,11 +688,11 @@ function onBeat(i,bpm){
   pal.push(pal.shift());applyPal();         // หมุนสีในพื้นหลังตามจังหวะ
 }
 setInterval(()=>{
-  if(!active||paused||!cur||REDUCED){document.body.style.setProperty('--b',0);return}
+  if(!active||paused||!cur||REDUCED){document.body.style.setProperty('--b',0);bEnv=0;return}
   const s=cur.song,bpm=s.bpm||120;let pos;
   if(s.bpm){try{pos=PL.time()-(s.beat0||0)}catch(e){return}}else pos=(performance.now()-tStart)/1000;
   const beats=pos*bpm/60,bi=Math.floor(beats),ph=beats-bi;
-  document.body.style.setProperty('--b',Math.exp(-ph*5).toFixed(3));
+  bEnv=Math.exp(-ph*5);document.body.style.setProperty('--b',bEnv.toFixed(3));
   if(bi!==lastBeat){lastBeat=bi;onBeat(bi,bpm)}
 },40);
 
@@ -629,6 +723,45 @@ function coverPalette(id){ // id = URL รูปปก (ต้องเป็น
   });
 }
 applyPal();
+
+// ---------- สถานะหน้าจอ / การ์ดตอบถูก / เป้าผู้ติดตาม / หมูออมสิน / คลื่นเสียงรอบแผ่น ----------
+function setState(s){$('game').dataset.st=s}
+function fitTiles(n){const w=Math.min(innerWidth,560)-40;$('slots').style.setProperty('--tw',Math.max(22,Math.min(46,Math.floor(w/Math.max(1,n))-8))+'px')}
+function showAnswerTiles(){const els=[...$('slots').children],cs=chars(cur.ans);els.forEach((e,i)=>{if(cs[i]&&cs[i].trim()){e.textContent=cs[i];e.classList.add('on')}})}
+function showWin(w,text){
+  $('wcAv').innerHTML=av({name:w.name,avatar:w.avatar},138);$('wcName').textContent=w.name;
+  $('wcTotal').textContent=w.total;$('wcGain').textContent='+'+w.gain;
+  $('wcStreak').textContent='🔥 ตอบถูกต่อเนื่อง '+w.streak+' เพลง';$('wcLeft').textContent='⏱ เหลือ 3 วิ';
+  $('wcBubAv').innerHTML=av({name:w.name,avatar:w.avatar},34);$('wcBubName').textContent=w.name;$('wcBubGain').textContent='  +'+w.gain;$('wcBubText').textContent=text;
+  showAnswerTiles();setState('correct');
+}
+function updateGoal(){if(!goal.target)return;const p=Math.min(100,goal.count/goal.target*100);$('goal').style.setProperty('--g',p+'%');$('gpct').textContent=Math.round(p)+'%';$('gnum').textContent=goal.count+' / '+goal.target}
+function onFollow(d){
+  if(!started||phase==='results')return;
+  const key=d.id||d.user,p0=players[key];
+  if(!(p0&&p0.followed)){const p=addPoints(key,d.user,d.avatar,10);p.followed=true;drawBoard();toast(`👤 ${d.user} ติดตาม +10 คะแนน`)}
+  if(goal.target){goal.count++;updateGoal();if(goal.count>=goal.target){burst();fanfare();toast('🎉 ครบเป้าผู้ติดตามแล้ว!',4000);goal.target+=goal.step;updateGoal()}}
+}
+function updatePiggy(){const p=Math.min(1,piggy.cur/piggy.need);$('pgfill').setAttribute('y',86-56*p);$('pgfill').setAttribute('height',56*p+4);$('plv').style.setProperty('--p',p*100+'%');$('plvtxt').textContent=`Lv.${piggy.lv}  ${piggy.cur}/${piggy.need}`}
+function onGift(d){
+  if(!started||d.streaking)return;
+  const dm=Math.max(1,Math.round(+d.diamonds||1));piggy.cur+=dm;let up=false;
+  while(piggy.cur>=piggy.need){piggy.cur-=piggy.need;piggy.lv++;piggy.need=Math.round(piggy.need*1.6);up=true}
+  updatePiggy();toast(`🎁 ${d.user} ส่ง ${d.name||'ของขวัญ'} +${dm}`);
+  if(up){burst();fanfare();setTimeout(()=>toast('🐷 หมูออมสินขึ้น Lv.'+piggy.lv+'!',3500),900)}
+}
+const sx=$('spec').getContext('2d');
+setInterval(()=>{ // คลื่นเสียงรอบแผ่น (ขยับตามจังหวะ/BPM)
+  const c=sx,W=480;c.clearRect(0,0,W,W);
+  if(!active||paused||REDUCED)return;
+  const n=96,cx=W/2,r0=W*.395,t=performance.now()/1000,k=.35+.65*bEnv;
+  c.beginPath();
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2,v=(Math.sin(i*1.7+t*5)+Math.sin(i*.37-t*3.1)+2)/4,len=W*(.012+.075*v*k);
+    c.moveTo(cx+Math.cos(a)*r0,cx+Math.sin(a)*r0);c.lineTo(cx+Math.cos(a)*(r0+len),cx+Math.sin(a)*(r0+len))}
+  c.lineCap='round';c.strokeStyle='#27e3ff';c.globalAlpha=.28;c.lineWidth=9;c.stroke();
+  c.strokeStyle='#9eeeff';c.globalAlpha=1;c.lineWidth=4;c.stroke();
+},40);
+setInterval(()=>{if(phase==='reveal'&&nextPending&&!paused){$('rvNext').textContent='เพลงต่อไปใน '+Math.max(0,Math.ceil((nextMs-(performance.now()-nextAt))/1000))}},250);
 window.addEventListener('unhandledrejection',e=>console.error(e.reason));
 </script>
 </body>
